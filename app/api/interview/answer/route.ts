@@ -45,11 +45,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Transcribe the audio (use live speech-to-text transcript if provided)
-    const transcript =
-      liveText && liveText.trim().length > 0
-        ? liveText.trim()
-        : (await transcribeAudio(audioBase64)).text;
+    // Transcribe the audio (use live speech-to-text transcript if provided, with safe fallback)
+    let transcript = "";
+    if (liveText && liveText.trim().length > 0) {
+      transcript = liveText.trim();
+    } else {
+      try {
+        const trResult = await transcribeAudio(audioBase64);
+        transcript = trResult.text || "";
+      } catch (err) {
+        console.warn("[Answer API] transcribeAudio failed, using fallback:", err);
+        transcript = "No response detected.";
+      }
+    }
 
     const effectiveTrack = session.track || track || "mock-interview";
 

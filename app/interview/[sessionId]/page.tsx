@@ -1,16 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import AudioRecorder from "@/components/AudioRecorder";
-import ProgressBar from "@/components/ProgressBar";
 import FrameworkIntroScreen from "@/components/FrameworkIntroScreen";
 import IeltsIntroScreen from "@/components/IeltsIntroScreen";
 import QuestionAudioControl from "@/components/QuestionAudioControl";
-import CameraPermissionPrompt from "@/components/CameraPermissionPrompt";
 import CameraPreview from "@/components/CameraPreview";
+import ParrotAvatar from "@/components/ParrotAvatar";
+import ProctoringBar from "@/components/ProctoringBar";
+import FullscreenWarning from "@/components/FullscreenWarning";
+import SystemCheck from "@/components/SystemCheck";
+import InterviewCountdown from "@/components/InterviewCountdown";
+import { useProctorShield, type ProctorViolation } from "@/components/ProctorShield";
 import { useQuestionSpeech } from "@/lib/speech/useQuestionSpeech";
-import type { BodyLanguageMetrics } from "@/lib/bodyLanguage/BodyLanguageAnalyzer";
+import type { BodyLanguageMetrics, BodyLanguageAnalyzer } from "@/lib/bodyLanguage/BodyLanguageAnalyzer";
 
 interface FrameworkStepItem {
   letter: string;
@@ -39,158 +44,16 @@ interface InterviewState {
   isProcessing: boolean;
 }
 
-function IeltsQuestionPanel({
-  currentQuestionIndex,
-  currentQuestion,
-  questionDetails,
-  audioControl,
-}: {
-  currentQuestionIndex: number;
-  currentQuestion: string;
-  questionDetails?: QuestionDetail[];
-  audioControl: React.ReactNode;
-}) {
-  const detail = questionDetails?.[currentQuestionIndex];
-
-  // Part 1 – Personal Question
-  if (currentQuestionIndex < 2) {
-    return (
-      <div className="space-y-4 animate-in fade-in duration-400">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-xs font-bold text-blue-300 uppercase tracking-wider backdrop-blur-md">
-              <span className="w-5 h-5 rounded-lg bg-blue-500/30 flex items-center justify-center text-xs font-black">1</span>
-              Part 1 — Personal & General
-            </div>
-            <span className="text-[11px] text-zinc-400 font-mono">Question {currentQuestionIndex + 1} of 2</span>
-          </div>
-          {audioControl}
-        </div>
-
-        <div className="glass-card rounded-3xl border border-blue-500/30 overflow-hidden shadow-2xl relative">
-          <div className="flex items-center gap-3 px-6 py-3.5 border-b border-blue-500/20 bg-blue-900/20">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/30 border border-blue-500/40 flex items-center justify-center text-sm">🎙️</div>
-            <span className="text-xs font-bold text-blue-300 uppercase tracking-widest font-jakarta">Examiner Prompt</span>
-          </div>
-          <div className="p-6 sm:p-8">
-            <p className="text-lg sm:text-xl font-semibold text-white leading-relaxed font-jakarta">{currentQuestion}</p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3 p-4 rounded-2xl bg-zinc-950/60 border border-white/10 text-xs text-zinc-300">
-          <span className="text-base shrink-0">💡</span>
-          <p className="leading-relaxed">
-            <strong className="text-white font-semibold">Examiner Tip:</strong> Speak naturally for 2–3 sentences. Warm up your fluency and pronunciation.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Part 2 – Cue Card
-  if (currentQuestionIndex === 2) {
-    const bulletPoints = detail?.bulletPoints || [];
-    const lines = currentQuestion.split("\n");
-    const mainPrompt = lines[0] || currentQuestion;
-    const parsedBullets: string[] = bulletPoints.length > 0
-      ? bulletPoints
-      : lines.filter((l: string) => l.startsWith("•")).map((l: string) => l.replace(/^•\s*/, ""));
-
-    return (
-      <div className="space-y-4 animate-in fade-in duration-400">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-xs font-bold text-purple-300 uppercase tracking-wider backdrop-blur-md">
-              <span className="w-5 h-5 rounded-lg bg-purple-500/30 flex items-center justify-center text-xs font-black">2</span>
-              Part 2 — Cue Card Long Turn
-            </div>
-            <span className="text-[11px] text-purple-300/80 font-mono">Speak for 1–2 minutes</span>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-3xl border-2 border-purple-500/40 overflow-hidden shadow-2xl relative">
-          <div className="px-6 py-3.5 bg-purple-500/15 border-b border-purple-500/25 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-purple-200 uppercase tracking-widest font-jakarta">Candidate Task Card</span>
-              <span className="text-[10px] text-purple-300/70 font-mono">IELTS Part 2</span>
-            </div>
-            {audioControl}
-          </div>
-
-          <div className="p-6 sm:p-8 space-y-6">
-            <p className="text-lg sm:text-xl font-bold text-white leading-snug font-jakarta">{mainPrompt}</p>
-
-            {parsedBullets.length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-purple-500/20">
-                <p className="text-[11px] font-extrabold text-purple-300 uppercase tracking-widest">You should say:</p>
-                <div className="space-y-3">
-                  {parsedBullets.map((bp: string, i: number) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-2xl bg-zinc-950/60 border border-white/5">
-                      <span className="w-6 h-6 rounded-lg bg-purple-500/25 border border-purple-500/40 text-purple-300 text-xs font-extrabold flex items-center justify-center shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-zinc-200 leading-relaxed font-medium">{bp}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="px-6 py-3.5 bg-purple-500/10 border-t border-purple-500/20">
-            <p className="text-xs text-purple-200/80 italic">
-              Take 1 minute to plan notes. Then record a continuous long response covering all points.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Part 3 – Discussion
-  const part3Number = currentQuestionIndex - 2;
-  return (
-    <div className="space-y-4 animate-in fade-in duration-400">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300 uppercase tracking-wider backdrop-blur-md">
-            <span className="w-5 h-5 rounded-lg bg-emerald-500/30 flex items-center justify-center text-xs font-black">3</span>
-            Part 3 — Two-Way Discussion
-          </div>
-          <span className="text-[11px] text-zinc-400 font-mono">Question {part3Number} of 2</span>
-        </div>
-      </div>
-
-      <div className="glass-card rounded-3xl border border-emerald-500/30 overflow-hidden shadow-2xl relative">
-        <div className="flex items-center justify-between px-6 py-3.5 border-b border-emerald-500/20 bg-emerald-900/20 flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/30 border border-emerald-500/40 flex items-center justify-center text-sm">🎙️</div>
-            <span className="text-xs font-bold text-emerald-300 uppercase tracking-widest font-jakarta">Examiner Discussion Prompt</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono text-emerald-400/80">Analytical</span>
-            {audioControl}
-          </div>
-        </div>
-        <div className="p-6 sm:p-8">
-          <p className="text-lg sm:text-xl font-semibold text-white leading-relaxed font-jakarta">{currentQuestion}</p>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3 p-4 rounded-2xl bg-zinc-950/60 border border-white/10 text-xs text-zinc-300">
-        <span className="text-base shrink-0">💡</span>
-        <p className="leading-relaxed">
-          <strong className="text-white font-semibold">Discussion Strategy:</strong> Express your perspective, present arguments, and justify your points with examples.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function InterviewPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const sessionId = params.sessionId as string;
+
+  // Interview Mode: "practice" (easy, no fullscreen lock, camera toggle on/off, tap-to-record)
+  // vs "serious" (real interview, fullscreen takeover, mandatory camera, automatic conversation recording)
+  const initialModeParam = searchParams.get("mode") === "serious" ? "serious" : "practice";
+  const [interviewMode, setInterviewMode] = useState<"practice" | "serious">(initialModeParam);
 
   const [state, setState] = useState<InterviewState>({
     sessionId: "",
@@ -204,21 +67,47 @@ export default function InterviewPage() {
     isProcessing: false,
   });
 
-  const [sessionStage, setSessionStage] = useState<"intro" | "practice" | "report">("intro");
+  // Stages: "system-check" -> "countdown" -> "intro" (if first time comm/ielts) -> "practice" -> "report"
+  const [sessionStage, setSessionStage] = useState<"system-check" | "countdown" | "intro" | "practice" | "report">("system-check");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [generatingReport, setGeneratingReport] = useState(false);
 
   // --- Camera / Body Language state ---
-  // "prompt" = show the opt-in modal, "requesting" = camera init in progress,
-  // "active" = camera running, "skipped" = user opted out
-  const [cameraState, setCameraState] = useState<"prompt" | "requesting" | "active" | "skipped">("prompt");
+  const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [isCurrentlyRecording, setIsCurrentlyRecording] = useState(false);
-  const analyzerRef = useRef<import("@/lib/bodyLanguage/BodyLanguageAnalyzer").BodyLanguageAnalyzer | null>(null);
+  const analyzerRef = useRef<BodyLanguageAnalyzer | null>(null);
   const latestMetricsRef = useRef<BodyLanguageMetrics | null>(null);
 
-  // Audio speech synthesis hook
+  // Auto-record trigger for serious mode
+  const [autoRecordTrigger, setAutoRecordTrigger] = useState(false);
+  const isSubmittingRef = useRef(false);
+
+  // --- Anti-cheating Proctor Shield (Only active in serious mode during active practice stage) ---
+  const [violationLog, setViolationLog] = useState<ProctorViolation[]>([]);
+  const isProctorEnabled =
+    sessionStage === "practice" && interviewMode === "serious" && !state.isComplete;
+
+  const handleProctorViolation = useCallback((violation: ProctorViolation) => {
+    setViolationLog((prev) => [...prev, violation]);
+  }, []);
+
+  const proctor = useProctorShield({
+    enabled: isProctorEnabled,
+    onViolation: handleProctorViolation,
+  });
+
+  // Automatically exit fullscreen mode when serious interview ends (enters report or completes)
+  useEffect(() => {
+    if (sessionStage === "report" || state.isComplete) {
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }, [sessionStage, state.isComplete]);
+
+  // Audio speech synthesis hook for Parrot
   const {
     audioEnabled,
     setAudioEnabled,
@@ -233,13 +122,12 @@ export default function InterviewPage() {
   const isIeltsSpeaking = state.track === "ielts-speaking";
   const currentQuestionDetail = state.questionDetails?.[state.currentQuestionIndex];
 
-  // Helper to formulate spoken text for the active prompt
+  // Helper to formulate spoken text for Parrot
   const getSpokenTextForCurrentQuestion = useCallback(() => {
     if (!state.currentQuestion) return "";
 
     if (isIeltsSpeaking) {
       if (state.currentQuestionIndex === 2) {
-        // Part 2 Cue card
         const detail = state.questionDetails?.[2];
         const bulletPoints: string[] = detail?.bulletPoints || [];
         const lines = state.currentQuestion.split("\n");
@@ -248,8 +136,8 @@ export default function InterviewPage() {
           bulletPoints.length > 0
             ? bulletPoints
             : lines
-              .filter((l: string) => l.startsWith("•"))
-              .map((l: string) => l.replace(/^•\s*/, ""));
+                .filter((l: string) => l.startsWith("•"))
+                .map((l: string) => l.replace(/^•\s*/, ""));
 
         if (parsedBullets.length > 0) {
           return `${mainPrompt}. You should say: ${parsedBullets.join(
@@ -269,13 +157,19 @@ export default function InterviewPage() {
     isIeltsSpeaking,
   ]);
 
-  // Replay speech on demand (force = true)
+  // Replay speech on demand
   const handleSpeakCurrent = useCallback(() => {
     const textToSpeak = getSpokenTextForCurrentQuestion();
     if (textToSpeak) {
-      speak(textToSpeak, true);
+      // In serious mode, replaying prompt should pause auto-record and re-trigger on finish
+      setAutoRecordTrigger(false);
+      speak(textToSpeak, true, () => {
+        if (interviewMode === "serious") {
+          setTimeout(() => setAutoRecordTrigger(true), 400);
+        }
+      });
     }
-  }, [getSpokenTextForCurrentQuestion, speak]);
+  }, [getSpokenTextForCurrentQuestion, speak, interviewMode]);
 
   // Load session from server
   useEffect(() => {
@@ -301,18 +195,15 @@ export default function InterviewPage() {
         const isComm = data.session.track === "communication-builder";
         const isIelts = data.session.track === "ielts-speaking";
 
-        if (isComm || isIelts) {
-          if (
-            data.session.currentQuestionIndex > 0 ||
-            (data.answers && data.answers.length > 0) ||
-            data.session.awaitingFollowUp
-          ) {
-            setSessionStage("practice");
-          } else {
-            setSessionStage("intro");
-          }
-        } else {
+        // If returning to a session already partially completed
+        if (
+          data.session.currentQuestionIndex > 0 ||
+          (data.answers && data.answers.length > 0) ||
+          data.session.awaitingFollowUp
+        ) {
           setSessionStage("practice");
+        } else {
+          setSessionStage("system-check");
         }
 
         setState({
@@ -353,7 +244,7 @@ export default function InterviewPage() {
     loadSession();
   }, [sessionId, router]);
 
-  // Automatically read questions out loud when presented in practice stage
+  // Parrot speaks questions out loud & auto-records in Serious Mode
   useEffect(() => {
     if (
       sessionStage !== "practice" ||
@@ -364,14 +255,23 @@ export default function InterviewPage() {
       return;
     }
 
-    const currentKey = `${state.currentQuestionIndex}-${state.isFollowUp ? "followup" : "main"
-      }-${state.currentQuestion}`;
+    const currentKey = `${state.currentQuestionIndex}-${
+      state.isFollowUp ? "followup" : "main"
+    }-${state.currentQuestion}`;
 
     if (lastSpokenKeyRef.current !== currentKey) {
       lastSpokenKeyRef.current = currentKey;
       const textToSpeak = getSpokenTextForCurrentQuestion();
       if (textToSpeak) {
-        speak(textToSpeak);
+        setAutoRecordTrigger(false);
+        speak(textToSpeak, false, () => {
+          // If in SERIOUS mode, automatically start recording once Parrot finishes speaking (crisp 150ms turn transition)
+          if (interviewMode === "serious") {
+            setTimeout(() => {
+              setAutoRecordTrigger(true);
+            }, 150);
+          }
+        });
       }
     }
   }, [
@@ -383,38 +283,33 @@ export default function InterviewPage() {
     state.isComplete,
     getSpokenTextForCurrentQuestion,
     speak,
+    interviewMode,
   ]);
 
-  // --- Camera: handle enable ---
-  const handleEnableCamera = useCallback(async () => {
-    setCameraState("requesting");
+  // --- Camera toggle methods ---
+  const handleRequestCamera = useCallback(async (): Promise<boolean> => {
     setCameraError("");
     try {
       const { BodyLanguageAnalyzer } = await import("@/lib/bodyLanguage/BodyLanguageAnalyzer");
       const analyzer = new BodyLanguageAnalyzer();
-      // init() creates its own off-screen video element — no external element needed
       await analyzer.init();
       analyzerRef.current = analyzer;
-      setCameraState("active");
+      setCameraActive(true);
+      return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Camera access denied.";
       setCameraError(msg);
-      setCameraState("prompt"); // go back so user can retry or skip
+      setCameraActive(false);
+      return false;
     }
   }, []);
 
-  // --- Camera: handle skip ---
-  const handleSkipCamera = useCallback(() => {
-    setCameraState("skipped");
-  }, []);
-
-  // --- Camera: turn off (user clicks X on preview) ---
   const handleDisableCamera = useCallback(() => {
     if (analyzerRef.current) {
       analyzerRef.current.stop();
       analyzerRef.current = null;
     }
-    setCameraState("skipped");
+    setCameraActive(false);
     latestMetricsRef.current = null;
   }, []);
 
@@ -428,13 +323,53 @@ export default function InterviewPage() {
     };
   }, []);
 
+  // Starting interview after system check & mode choice
+  const handleProceedFromSystemCheck = useCallback(
+    async (chosenMode: "practice" | "serious") => {
+      setInterviewMode(chosenMode);
+
+      if (chosenMode === "serious") {
+        // Enforce true fullscreen takeover in serious mode
+        await proctor.requestFullscreen();
+        // 5-second countdown at the beginning of the serious interview
+        setSessionStage("countdown");
+      } else {
+        if (
+          (isCommBuilder || isIeltsSpeaking) &&
+          state.currentQuestionIndex === 0 &&
+          !state.isFollowUp
+        ) {
+          setSessionStage("intro");
+        } else {
+          setSessionStage("practice");
+        }
+      }
+    },
+    [proctor, isCommBuilder, isIeltsSpeaking, state.currentQuestionIndex, state.isFollowUp]
+  );
+
+  // Submitting recording answer
   const handleRecordingComplete = useCallback(
     async (audioBase64: string, duration: number, liveText?: string) => {
-      stop(); // Stop audio if speaking
+      // Prevent duplicate submissions or submitting during existing processing
+      if (isSubmittingRef.current || state.isProcessing || state.isComplete) {
+        console.warn("[Interview] Blocked duplicate or premature submission");
+        return;
+      }
+
+      // Guard against empty audio chunks
+      if (!audioBase64 || audioBase64.length < 50) {
+        console.warn("[Interview] Blocked empty audio submission");
+        return;
+      }
+
+      isSubmittingRef.current = true;
+      stop(); // Stop audio if Parrot is speaking
+      setAutoRecordTrigger(false);
 
       // Stop body language sampling and capture metrics
       let blMetrics: BodyLanguageMetrics | null = null;
-      if (analyzerRef.current && cameraState === "active") {
+      if (analyzerRef.current && cameraActive) {
         blMetrics = analyzerRef.current.stopSampling();
         latestMetricsRef.current = blMetrics;
       }
@@ -452,7 +387,6 @@ export default function InterviewPage() {
             questionText: state.currentQuestion,
             isFollowUp: state.isFollowUp,
             liveText,
-            // Body language data (null if camera was skipped)
             eyeContactPercent: blMetrics?.eyeContactPercent ?? null,
             movementScore: blMetrics?.movementScore ?? null,
           }),
@@ -505,13 +439,18 @@ export default function InterviewPage() {
           err instanceof Error ? err.message : "Failed to process answer."
         );
         setState((prev) => ({ ...prev, isProcessing: false }));
+      } finally {
+        isSubmittingRef.current = false;
       }
     },
-    [sessionId, state.currentQuestion, state.isFollowUp, stop, cameraState]
+    [sessionId, state.currentQuestion, state.isFollowUp, state.isProcessing, state.isComplete, stop, cameraActive]
   );
 
   const handleGenerateReport = async () => {
     stop();
+    if (typeof document !== "undefined" && document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
     setGeneratingReport(true);
     try {
       const res = await fetch("/api/interview/end", {
@@ -553,154 +492,166 @@ export default function InterviewPage() {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="flex flex-col items-center gap-4 glass-card p-8 rounded-3xl border border-white/10">
-          <svg className="animate-spin h-10 w-10 text-indigo-400" viewBox="0 0 24 24" fill="none">
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="flex flex-col items-center gap-4 glass-card p-8 rounded-3xl border border-slate-200 shadow-2xl">
+          <svg className="animate-spin h-10 w-10 text-emerald-600" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <p className="text-zinc-300 text-sm font-semibold font-jakarta">Preparing Interview Studio...</p>
+          <div className="text-center">
+            <p className="text-slate-900 text-base font-bold font-jakarta">Preparing Parrot Studio...</p>
+            <p className="text-slate-600 text-xs font-mono mt-1">Configuring AI session</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="max-w-lg mx-auto mt-12">
-        <div className="glass-card border border-red-500/30 rounded-3xl p-8 text-center space-y-4">
-          <p className="text-red-400 font-medium">{error}</p>
+      <div className="max-w-lg mx-auto mt-16 px-4">
+        <div className="glass-card border border-red-500/30 rounded-3xl p-8 text-center space-y-4 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-600 flex items-center justify-center mx-auto text-xl">
+            ⚠️
+          </div>
+          <p className="text-red-600 font-medium text-sm">{error}</p>
           <button
             onClick={() => router.push("/")}
-            className="text-xs font-bold text-indigo-400 hover:text-indigo-300 underline"
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 underline font-mono"
           >
-            Back to Studio Home
+            ← Return to Home
           </button>
         </div>
       </div>
     );
   }
 
-  if (isCommBuilder && sessionStage === "intro") {
+  // Stage 1: Setup & Mode Selection (Practice vs Serious)
+  if (sessionStage === "system-check") {
     return (
-      <div className="max-w-3xl mx-auto space-y-8">
-        <FrameworkIntroScreen
-          questionDetails={(state.questionDetails as any) || []}
-          onStartPractice={() => {
-            setSessionStage("practice");
-            setState((prev) => ({ ...prev, currentQuestionIndex: 0 }));
-          }}
-        />
-      </div>
+      <SystemCheck
+        onStartInterview={handleProceedFromSystemCheck}
+        trackName={state.track}
+        onRequestCamera={handleRequestCamera}
+        cameraActive={cameraActive}
+        cameraError={cameraError}
+        initialMode={interviewMode}
+      />
     );
   }
 
-  if (isIeltsSpeaking && sessionStage === "intro") {
+  // Stage 1.2: 5-Second Countdown at the beginning of serious interview
+  if (sessionStage === "countdown") {
     return (
-      <div className="max-w-3xl mx-auto space-y-8">
-        <IeltsIntroScreen
-          onStartPractice={() => {
+      <InterviewCountdown
+        trackName={state.track}
+        onComplete={() => {
+          if (
+            (isCommBuilder || isIeltsSpeaking) &&
+            state.currentQuestionIndex === 0 &&
+            !state.isFollowUp
+          ) {
+            setSessionStage("intro");
+          } else {
             setSessionStage("practice");
-            setState((prev) => ({ ...prev, currentQuestionIndex: 0 }));
-          }}
-        />
-      </div>
+          }
+        }}
+      />
     );
   }
 
-  const audioControlElement = (
-    <QuestionAudioControl
-      audioEnabled={audioEnabled}
-      onToggleAudio={setAudioEnabled}
-      isSpeaking={isSpeaking}
-      onSpeak={handleSpeakCurrent}
-      onStop={stop}
-    />
-  );
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-8">
-
-      {/* Camera Permission Prompt Modal — shown once when practice stage starts */}
-      {sessionStage === "practice" && !state.isComplete && !state.isProcessing &&
-        (cameraState === "prompt" || cameraState === "requesting") && (
-        <CameraPermissionPrompt
-          onEnable={handleEnableCamera}
-          onSkip={handleSkipCamera}
-          isRequesting={cameraState === "requesting"}
-          errorMessage={cameraError || undefined}
-        />
-      )}
-      {/* Top Header Bar with Exit and Global Voice Audio Toggle */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pb-1">
-        <button
-          onClick={() => {
-            stop();
-            router.push("/");
-          }}
-          className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-zinc-400 hover:text-white transition-colors bg-zinc-950/70 border border-white/10 px-3.5 py-1.5 rounded-xl hover:bg-zinc-900"
-        >
-          ← Exit Studio
-        </button>
-
-        <div className="flex items-center gap-3">
-          {isSpeaking && (
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span>Speaking question out loud...</span>
-            </div>
-          )}
-          <QuestionAudioControl
-            audioEnabled={audioEnabled}
-            onToggleAudio={(val) => {
-              setAudioEnabled(val);
-              if (val) {
-                handleSpeakCurrent();
+  // Stage 1.5: Track Intro Screens (Framework or IELTS)
+  if (sessionStage === "intro") {
+    if (isCommBuilder) {
+      return (
+        <div className="max-w-4xl mx-auto py-8 px-4">
+          <FrameworkIntroScreen
+            questionDetails={(state.questionDetails as any) || []}
+            onStartPractice={() => {
+              setSessionStage("practice");
+              setState((prev) => ({ ...prev, currentQuestionIndex: 0 }));
+              if (interviewMode === "serious") {
+                proctor.requestFullscreen();
               }
             }}
-            isSpeaking={isSpeaking}
-            onSpeak={handleSpeakCurrent}
-            onStop={stop}
-            variant="header-toggle"
           />
         </div>
-      </div>
+      );
+    }
+    if (isIeltsSpeaking) {
+      return (
+        <div className="max-w-4xl mx-auto py-8 px-4">
+          <IeltsIntroScreen
+            onStartPractice={() => {
+              setSessionStage("practice");
+              setState((prev) => ({ ...prev, currentQuestionIndex: 0 }));
+              if (interviewMode === "serious") {
+                proctor.requestFullscreen();
+              }
+            }}
+          />
+        </div>
+      );
+    }
+  }
 
-      {/* Progress Bar */}
-      <ProgressBar
-        current={state.currentQuestionIndex}
-        total={state.totalQuestions}
-        awaitingFollowUp={state.isFollowUp}
-      />
-
-      {/* Complete State */}
-      {sessionStage === "report" || state.isComplete ? (
-        <div className="glass-card rounded-3xl p-8 sm:p-12 text-center space-y-6 border border-white/10 shadow-2xl">
+  // Stage 3: Interview Completed / Report Stage
+  if (sessionStage === "report" || state.isComplete) {
+    return (
+      <div className="max-w-3xl mx-auto py-12 px-4">
+        <div className="glass-card rounded-3xl p-8 sm:p-12 text-center space-y-6 border border-slate-200 shadow-2xl">
           <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-            <svg className="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-3xl font-extrabold text-white font-jakarta">
-              {isIeltsSpeaking ? "IELTS Exam Practice Complete!" : "Session Complete!"}
+            <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-600 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              {interviewMode === "serious" ? "Serious Proctored Session Completed" : "Practice Session Completed"}
+            </span>
+            <h2 className="text-3xl font-black text-slate-900 font-jakarta">
+              {isIeltsSpeaking ? "IELTS Exam Practice Complete!" : "Session Completed with Parrot!"}
             </h2>
-            <p className="text-zinc-400 text-sm max-w-md mx-auto">
+            <p className="text-slate-600 text-sm max-w-md mx-auto">
               {isIeltsSpeaking
                 ? "All 3 parts recorded. Generate your comprehensive report to view your estimated Band Scores across 4 criteria."
-                : "All prompts have been answered. Generate your report for transcript analysis, filler words, and STAR feedback."}
+                : "All interview prompts completed. Generate your report for transcript analysis, filler words, grammar, and STAR feedback."}
             </p>
           </div>
 
+          {/* Mode & Proctor Summary */}
+          <div className="flex items-center justify-center gap-4 py-2 flex-wrap">
+            <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono">
+              <span className="text-slate-600">Mode: </span>
+              <span className={`font-bold ${interviewMode === "serious" ? "text-red-600" : "text-emerald-600"}`}>
+                {interviewMode === "serious" ? "⚔️ Serious Proctored" : "🎯 Practice Mode"}
+              </span>
+            </div>
+            {interviewMode === "serious" && (
+              <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono">
+                <span className="text-slate-600">Proctor Violations: </span>
+                <span className={`font-bold ${proctor.totalViolations === 0 ? "text-emerald-600" : "text-amber-600"}`}>
+                  {proctor.totalViolations}
+                </span>
+              </div>
+            )}
+            <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono">
+              <span className="text-slate-600">AI Interviewer: </span>
+              <span className="text-indigo-600 font-bold">Parrot v2.4</span>
+            </div>
+          </div>
+
           {state.lastTranscript && (
-            <div className="text-left bg-zinc-950/80 border border-white/5 rounded-2xl p-4 space-y-1">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-500">
+            <div className="text-left bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
                 Last Recorded Response
               </p>
-              <p className="text-xs text-zinc-300 leading-relaxed">&ldquo;{state.lastTranscript}&rdquo;</p>
+              <p className="text-xs text-slate-700 leading-relaxed">&ldquo;{state.lastTranscript}&rdquo;</p>
             </div>
           )}
 
@@ -708,139 +659,412 @@ export default function InterviewPage() {
             id="generate-report-btn"
             onClick={handleGenerateReport}
             disabled={generatingReport}
-            className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 hover:from-emerald-500 hover:to-cyan-400 disabled:from-zinc-800 disabled:to-zinc-900 text-white font-extrabold text-sm tracking-wide transition-all shadow-xl shadow-emerald-500/30 hover:scale-105"
+            className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:from-slate-100 disabled:to-slate-50 text-white font-extrabold text-sm tracking-wide transition-all shadow-xl shadow-emerald-500/30 hover:scale-105"
           >
             {generatingReport ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                <svg className="animate-spin h-5 w-5 text-slate-900" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Generating Detailed Analysis...
+                Parrot is generating detailed report...
               </span>
             ) : (
               isIeltsSpeaking ? "Generate IELTS Band Score Report →" : "Generate Feedback Report →"
             )}
           </button>
         </div>
-      ) : (
-        /* Active Recording State */
-        <div className="space-y-6">
-          {/* Last Transcript Display */}
+      </div>
+    );
+  }
+
+  // Format cue card bullets if in IELTS Part 2
+  const isIeltsPart2 = isIeltsSpeaking && state.currentQuestionIndex === 2;
+  const ieltsPart2Bullets = (() => {
+    if (!isIeltsPart2) return [];
+    const detail = state.questionDetails?.[2];
+    const bulletPoints = detail?.bulletPoints || [];
+    const lines = state.currentQuestion.split("\n");
+    return bulletPoints.length > 0
+      ? bulletPoints
+      : lines.filter((l: string) => l.startsWith("•")).map((l: string) => l.replace(/^•\s*/, ""));
+  })();
+
+  const currentSpokenQuestion = getSpokenTextForCurrentQuestion();
+  const isSerious = interviewMode === "serious";
+
+  // Common Question Card component shared across both views
+  const QuestionCardContent = (
+    <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-5 border border-slate-300 shadow-2xl relative overflow-hidden">
+      <div
+        className={`absolute top-0 left-0 right-0 h-1.5 ${
+          state.isFollowUp ? "bg-amber-400" : isIeltsSpeaking ? "bg-purple-500" : "bg-emerald-500"
+        }`}
+      />
+
+      {/* Card Header with Question Details */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border ${
+              state.isFollowUp
+                ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+                : "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"
+            }`}
+          >
+            {state.isFollowUp
+              ? "⚡ Follow-up Prompt"
+              : isIeltsSpeaking
+              ? `IELTS Speaking • Part ${state.currentQuestionIndex < 2 ? "1" : state.currentQuestionIndex === 2 ? "2" : "3"}`
+              : `Question ${state.currentQuestionIndex + 1} of ${state.totalQuestions}`}
+          </span>
+
+          {isIeltsPart2 && (
+            <span className="text-[10px] font-mono text-purple-700 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+              Cue Card (1–2 min)
+            </span>
+          )}
+        </div>
+
+        <QuestionAudioControl
+          audioEnabled={audioEnabled}
+          onToggleAudio={setAudioEnabled}
+          isSpeaking={isSpeaking}
+          onSpeak={handleSpeakCurrent}
+          onStop={stop}
+        />
+      </div>
+
+      {/* Main Question Text */}
+      <div className="space-y-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-relaxed font-jakarta">
+          {isIeltsPart2 ? state.currentQuestion.split("\n")[0] : state.currentQuestion}
+        </h2>
+
+        {/* IELTS Part 2 Bullet Points */}
+        {isIeltsPart2 && ieltsPart2Bullets.length > 0 && (
+          <div className="space-y-2 pt-3 border-t border-purple-500/20">
+            <p className="text-[11px] font-black text-purple-700 uppercase tracking-widest">
+              You should say:
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {ieltsPart2Bullets.map((bp: string, i: number) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800"
+                >
+                  <span className="w-5 h-5 rounded bg-purple-500/20 text-purple-700 text-[10px] font-bold flex items-center justify-center shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="leading-snug">{bp}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Communication Framework Hint (STAR, CAR, SEE) */}
+      {isCommBuilder && currentQuestionDetail && !state.isFollowUp && (() => {
+        const fw = currentQuestionDetail.framework;
+        const colorMap: Record<string, { bg: string; text: string; border: string; stepBg: string }> = {
+          STAR: { bg: "bg-indigo-500/10", text: "text-indigo-700", border: "border-indigo-500/30", stepBg: "bg-indigo-600/30" },
+          CAR: { bg: "bg-emerald-500/10", text: "text-emerald-700", border: "border-emerald-500/30", stepBg: "bg-emerald-600/30" },
+          SEE: { bg: "bg-amber-500/10", text: "text-amber-700", border: "border-amber-500/30", stepBg: "bg-amber-600/30" },
+          PAR: { bg: "bg-purple-500/10", text: "text-purple-700", border: "border-purple-500/30", stepBg: "bg-purple-600/30" },
+        };
+        const c = (fw && colorMap[fw]) || colorMap.STAR;
+        return (
+          <div className={`rounded-2xl border ${c.border} ${c.bg} p-3.5 space-y-2`}>
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-black uppercase tracking-wider ${c.text}`}>
+                💡 Structure with {fw} Framework
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {currentQuestionDetail.frameworkSteps?.map((step: FrameworkStepItem) => (
+                <div
+                  key={step.letter}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200"
+                >
+                  <span className={`w-4 h-4 rounded ${c.stepBg} ${c.text} text-[10px] font-bold flex items-center justify-center`}>
+                    {step.letter}
+                  </span>
+                  <span className="text-[11px] text-slate-700 font-medium">
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+
+  // Common Recorder Hub component (Preserves AudioRecorder mount to prevent unmount ghost audio)
+  const RecorderHubContent = (
+    <div className="glass-card rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-2xl">
+      {state.isProcessing && (
+        <div className="flex flex-col items-center justify-center py-8 space-y-4">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin" />
+            <span className="absolute inset-0 flex items-center justify-center text-xl">
+              🦜
+            </span>
+          </div>
+          <div className="text-center space-y-1">
+            <h3 className="text-sm font-bold text-slate-900 font-jakarta">
+              Parrot is evaluating your response...
+            </h3>
+            <p className="text-xs text-slate-600 font-mono">
+              Analyzing grammar, speech metrics & criteria
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className={state.isProcessing ? "hidden" : "space-y-4"}>
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold">
+            {isSerious ? "Hands-Free Conversation Mode" : "Candidate Response Console (Tap-to-Record)"}
+          </span>
+          {isSpeaking && (
+            <span className="text-[10px] font-mono text-emerald-600 animate-pulse">
+              Parrot is speaking — please listen
+            </span>
+          )}
+        </div>
+
+        <AudioRecorder
+          mode={interviewMode}
+          autoStart={autoRecordTrigger}
+          disabled={isSpeaking || state.isProcessing}
+          onRecordingComplete={handleRecordingComplete}
+          onStartRecording={stop}
+          onRecordingStateChange={(recording) => {
+            setIsCurrentlyRecording(recording);
+            if (recording && analyzerRef.current && cameraActive) {
+              analyzerRef.current.startSampling();
+            }
+          }}
+        />
+      </div>
+    </div>
+  );
+
+  // ─────────────────────────────────────────────────────────────
+  // MODE 1: CASUAL PRACTICE MODE (No screen takeover, camera toggle on/off, tap-to-record)
+  // ─────────────────────────────────────────────────────────────
+  if (!isSerious) {
+    return (
+      <div className="min-h-screen text-slate-900 py-6 px-4">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Top Practice Navigation Bar */}
+          <header className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  stop();
+                  router.push("/");
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl hover:bg-slate-100"
+              >
+                ← Exit Practice
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🦜</span>
+                <span className="text-xs font-bold font-jakarta text-slate-900 uppercase tracking-wider">
+                  Parrot Studio
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 font-mono font-bold border border-emerald-500/30">
+                  🎯 Practice Mode
+                </span>
+              </div>
+            </div>
+
+            {/* Camera Toggle Button & Sound */}
+            <div className="flex items-center gap-3">
+              {/* Camera ON / OFF Toggle */}
+              {cameraActive ? (
+                <button
+                  onClick={handleDisableCamera}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-mono text-slate-700 hover:text-red-600 transition-colors"
+                  title="Turn off webcam"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Turn Camera Off</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleRequestCamera}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-xs font-mono text-indigo-700 hover:text-slate-900 transition-colors"
+                  title="Turn on webcam for eye-contact analysis"
+                >
+                  <span>📷</span>
+                  <span>Turn Camera On</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setAudioEnabled(!audioEnabled)}
+                className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700 hover:text-slate-900 transition-colors"
+                title={audioEnabled ? "Mute voice" : "Unmute voice"}
+              >
+                {audioEnabled ? "🔊 Voice: On" : "🔇 Voice: Muted"}
+              </button>
+            </div>
+          </header>
+
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between text-xs font-mono text-slate-600 px-1">
+            <span>
+              Question {state.currentQuestionIndex + 1} of {state.totalQuestions}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: state.totalQuestions || 5 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    idx < state.currentQuestionIndex
+                      ? "w-6 bg-emerald-400"
+                      : idx === state.currentQuestionIndex
+                      ? "w-8 bg-indigo-400"
+                      : "w-3 bg-slate-200"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Previous Answer Transcript Note */}
           {state.lastTranscript && (
-            <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 space-y-1 animate-in fade-in duration-300">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-500">
-                Previous Answer Transcript
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1 animate-in fade-in duration-300">
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 flex items-center gap-1.5 font-mono">
+                <span>📝</span> Previous Answer Transcript
               </p>
-              <p className="text-xs text-zinc-400 leading-relaxed italic">
+              <p className="text-xs text-slate-700 leading-relaxed italic">
                 &ldquo;{state.lastTranscript}&rdquo;
               </p>
             </div>
           )}
 
-          {/* Question Display with Audio controls */}
-          {isIeltsSpeaking ? (
-            <IeltsQuestionPanel
-              currentQuestionIndex={state.currentQuestionIndex}
-              currentQuestion={state.currentQuestion}
-              questionDetails={state.questionDetails}
-              audioControl={audioControlElement}
-            />
-          ) : (
-            <div className="space-y-4">
-              <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-4 border border-white/10 shadow-2xl relative overflow-hidden">
-                <div className={`absolute top-0 left-0 right-0 h-1 ${state.isFollowUp ? "bg-amber-500" : "bg-indigo-500"}`} />
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span
-                    className={`text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border ${state.isFollowUp
-                        ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
-                        : "bg-indigo-500/15 text-indigo-300 border-indigo-500/30"
-                      }`}
-                  >
-                    {state.isFollowUp
-                      ? "⚡ Follow-up Question"
-                      : `Question ${state.currentQuestionIndex + 1} of ${state.totalQuestions}`}
-                  </span>
+          {/* Practice Main Split Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Parrot Avatar & Optional Camera Preview */}
+            <div className="lg:col-span-5 space-y-4">
+              <ParrotAvatar
+                isSpeaking={isSpeaking}
+                isListening={isCurrentlyRecording}
+                isProcessing={state.isProcessing}
+                currentSpokenText={currentSpokenQuestion}
+                onReplaySpeech={handleSpeakCurrent}
+                audioEnabled={audioEnabled}
+              />
 
-                  {audioControlElement}
+              {/* Camera Preview (Shown only if turned ON) */}
+              {cameraActive && (
+                <div className="flex justify-center animate-in fade-in duration-300">
+                  <CameraPreview
+                    analyzerRef={analyzerRef}
+                    isRecording={isCurrentlyRecording}
+                    onDisableCamera={handleDisableCamera}
+                  />
                 </div>
-                <p className="text-lg sm:text-xl font-bold text-white leading-relaxed font-jakarta">
-                  {state.currentQuestion}
-                </p>
-              </div>
-
-              {isCommBuilder && currentQuestionDetail && !state.isFollowUp && (() => {
-                const fw = currentQuestionDetail.framework;
-                const colorMap: Record<string, { bg: string; text: string; border: string; stepBg: string }> = {
-                  STAR: { bg: "bg-indigo-500/10", text: "text-indigo-300", border: "border-indigo-500/30", stepBg: "bg-indigo-600/30" },
-                  CAR: { bg: "bg-emerald-500/10", text: "text-emerald-300", border: "border-emerald-500/30", stepBg: "bg-emerald-600/30" },
-                  SEE: { bg: "bg-amber-500/10", text: "text-amber-300", border: "border-amber-500/30", stepBg: "bg-amber-600/30" },
-                  PAR: { bg: "bg-purple-500/10", text: "text-purple-300", border: "border-purple-500/30", stepBg: "bg-purple-600/30" },
-                };
-                const c = (fw && colorMap[fw]) || colorMap.STAR;
-                return (
-                  <div className={`rounded-2xl border ${c.border} ${c.bg} p-4 space-y-2`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-extrabold uppercase tracking-wider ${c.text}`}>
-                        💡 Structure using the {fw} Framework
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {currentQuestionDetail.frameworkSteps?.map((step: FrameworkStepItem) => (
-                        <div key={step.letter} className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-950/60 border border-white/5">
-                          <span className={`w-4 h-4 rounded ${c.stepBg} ${c.text} text-[10px] font-bold flex items-center justify-center`}>
-                            {step.letter}
-                          </span>
-                          <span className="text-[11px] text-zinc-300 font-medium">
-                            {step.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+              )}
             </div>
-          )}
 
-          {/* Audio Recording Hub */}
-          <div className="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl">
-            {state.isProcessing ? (
-              <div className="flex flex-col items-center gap-4 py-8">
-                <svg className="animate-spin h-10 w-10 text-indigo-400" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <p className="text-sm font-semibold text-zinc-200 font-jakarta">Processing your voice recording...</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <AudioRecorder
-                  onRecordingComplete={handleRecordingComplete}
-                  onStartRecording={stop}
-                  onRecordingStateChange={(recording) => {
-                    setIsCurrentlyRecording(recording);
-                    if (recording && analyzerRef.current && cameraState === "active") {
-                      analyzerRef.current.startSampling();
-                    }
-                  }}
-                />
-
-                {/* Camera preview — shown when camera is active */}
-                {cameraState === "active" && (
-                  <div className="flex justify-center mt-2">
-                    <CameraPreview
-                      analyzerRef={analyzerRef}
-                      isRecording={isCurrentlyRecording}
-                      onDisableCamera={handleDisableCamera}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Right Column: Question Card & Tap-To-Record Console */}
+            <div className="lg:col-span-7 space-y-6">
+              {QuestionCardContent}
+              {RecorderHubContent}
+            </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // MODE 2: SERIOUS INTERVIEW (Screen takeover, mandatory video, automatic hands-free conversation)
+  // ─────────────────────────────────────────────────────────────
+  return (
+    <div className="fixed inset-0 z-40 bg-[#eaf2fb] text-slate-900 flex flex-col overflow-hidden select-none">
+      {/* 1. Fullscreen Violation Guard & Warning Overlay */}
+      <FullscreenWarning
+        showWarning={proctor.showWarning}
+        warningMessage={proctor.warningMessage}
+        isFullscreen={proctor.isFullscreen}
+        isFocused={proctor.isFocused}
+        totalViolations={proctor.totalViolations}
+        onRequestFullscreen={proctor.requestFullscreen}
+        onDismiss={proctor.dismissWarning}
+      />
+
+      {/* 2. Top Proctoring Bar */}
+      <ProctoringBar
+        currentQuestionIndex={state.currentQuestionIndex}
+        totalQuestions={state.totalQuestions}
+        isFollowUp={state.isFollowUp}
+        totalViolations={proctor.totalViolations}
+        isFullscreen={proctor.isFullscreen}
+        onRequestFullscreen={proctor.requestFullscreen}
+        audioEnabled={audioEnabled}
+        onToggleAudio={setAudioEnabled}
+        onExit={() => {
+          stop();
+          if (typeof document !== "undefined" && document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+          }
+          router.push("/");
+        }}
+        trackName={state.track}
+      />
+
+      {/* 3. Main Split-Screen Workspace */}
+      <main className="flex-1 w-full max-w-[1600px] mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 overflow-hidden">
+        {/* Left Column: Parrot AI Avatar & Mandatory Docked Candidate Webcam */}
+        <section className="lg:col-span-5 flex flex-col gap-4 h-full overflow-y-auto pr-1">
+          <div className="flex-1 min-h-[360px] flex flex-col">
+            <ParrotAvatar
+              isSpeaking={isSpeaking}
+              isListening={isCurrentlyRecording}
+              isProcessing={state.isProcessing}
+              currentSpokenText={currentSpokenQuestion}
+              onReplaySpeech={handleSpeakCurrent}
+              audioEnabled={audioEnabled}
+            />
+          </div>
+
+          {/* Mandatory Camera Preview in Serious Mode */}
+          <div className="shrink-0 flex justify-center">
+            <CameraPreview
+              analyzerRef={analyzerRef}
+              isRecording={isCurrentlyRecording}
+            />
+          </div>
+        </section>
+
+        {/* Right Column: Question Card & Hands-Free Audio Recorder */}
+        <section className="lg:col-span-7 flex flex-col gap-4 h-full overflow-y-auto pl-1 justify-between">
+          <div className="space-y-4">
+            {state.lastTranscript && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1 animate-in fade-in duration-300">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 flex items-center gap-1.5 font-mono">
+                  <span>📝</span> Previous Answer Transcript
+                </p>
+                <p className="text-xs text-slate-700 leading-relaxed italic line-clamp-2">
+                  &ldquo;{state.lastTranscript}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {QuestionCardContent}
+          </div>
+
+          {RecorderHubContent}
+        </section>
+      </main>
     </div>
   );
 }

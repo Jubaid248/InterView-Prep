@@ -9,6 +9,7 @@
  * need to pass or manage any video DOM element. Use getStream() to display the feed.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import type {

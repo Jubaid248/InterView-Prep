@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const STORAGE_KEY = "totapakhi_voice_audio_enabled";
+const STORAGE_KEY = "parrot_voice_audio_enabled";
+const LEGACY_STORAGE_KEY = "totapakhi_voice_audio_enabled";
 
 /**
  * Cleans text of markdown syntax, bullet points, and formatting
@@ -50,6 +51,7 @@ export function useQuestionSpeech() {
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const keepAliveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load user preference from localStorage
   useEffect(() => {
@@ -58,7 +60,7 @@ export function useQuestionSpeech() {
       setSupported(isSpeechSupported);
 
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
         if (stored !== null) {
           setAudioEnabledState(stored === "true");
         }
@@ -132,17 +134,30 @@ export function useQuestionSpeech() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
     clearKeepAlive();
     setIsSpeaking(false);
   }, []);
 
   const speak = useCallback(
-    (rawText: string, force: boolean = false) => {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-      if (!audioEnabled && !force) return;
+    (rawText: string, force: boolean = false, onEnd?: () => void) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+        onEnd?.();
+        return;
+      }
+      if (!audioEnabled && !force) {
+        onEnd?.();
+        return;
+      }
 
       const cleanText = formatTextForSpeech(rawText);
-      if (!cleanText) return;
+      if (!cleanText) {
+        onEnd?.();
+        return;
+      }
 
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
@@ -152,6 +167,9 @@ export function useQuestionSpeech() {
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
       }
+
+      // Mark as speaking synchronously to block mic before async browser TTS kicks off
+      setIsSpeaking(true);
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
       currentUtteranceRef.current = utterance;
@@ -163,10 +181,22 @@ export function useQuestionSpeech() {
       utterance.rate = 0.98; // Natural, conversational speed
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
+      let hasFinished = false;
+
+      const finishSpeech = () => {
+        if (hasFinished) return;
+        hasFinished = true;
+        if (fallbackTimerRef.current) {
+          clearTimeout(fallbackTimerRef.current);
+          fallbackTimerRef.current = null;
+        }
+        setIsSpeaking(false);
+        clearKeepAlive();
+        onEnd?.();
+      };
 
       utterance.onstart = () => {
         setIsSpeaking(true);
-        // Chrome bug workaround: long utterances pause after ~14 seconds
         clearKeepAlive();
         keepAliveTimerRef.current = setInterval(() => {
           if (window.speechSynthesis.speaking) {
@@ -175,29 +205,39 @@ export function useQuestionSpeech() {
           } else {
             clearKeepAlive();
           }
-        }, 10000);
+        }, 8000);
+
+        // Emergency fallback watchdog timer: only triggers if browser SpeechSynthesis locks up
+        if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = setTimeout(() => {
+          if (typeof window !== "undefined" && "speechSynthesis" in window && window.speechSynthesis.speaking) {
+            // Active speech in progress — do NOT cut off speech
+            return;
+          }
+          console.log("[Speech] Failsafe timeout reached");
+          finishSpeech();
+        }, 90000);
       };
 
       utterance.onend = () => {
-        setIsSpeaking(false);
-        clearKeepAlive();
+        // Crisp 100ms acoustic clearance buffer after speech ends
+        setTimeout(() => {
+          finishSpeech();
+        }, 100);
       };
 
       utterance.onerror = (e) => {
-        // If canceled intentionally, ignore
         if (e.error !== "canceled" && e.error !== "interrupted") {
           console.warn("Speech synthesis notice:", e.error);
         }
-        setIsSpeaking(false);
-        clearKeepAlive();
+        finishSpeech();
       };
 
       try {
         window.speechSynthesis.speak(utterance);
       } catch (err) {
         console.warn("Failed to speak text:", err);
-        setIsSpeaking(false);
-        clearKeepAlive();
+        finishSpeech();
       }
     },
     [audioEnabled]

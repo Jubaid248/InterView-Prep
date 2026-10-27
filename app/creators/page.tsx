@@ -13,28 +13,12 @@ interface Creator {
 
 const CREATORS: Creator[] = [
   {
-    name: "Farhan Ashraf Muhaimin",
-    role: "Product Designing",
-    image: "/creators/farhan.jpg",
-    description:
-      "Crafting user-centric UI/UX design systems, modern visual ergonomics, and 3D interactive user experiences for TotaPakhi.",
-    tag: "Design Lead",
-  },
-  {
-    name: "Raiyan Razi Rahman",
-    role: "Data Analyst",
-    image: "/creators/raiyan.jpg",
-    description:
-      "Engineered prompt-by-prompt speech metrics, filler word analytics, and quantitative IELTS criteria evaluation models.",
-    tag: "Data Lead",
-  },
-  {
     name: "Md. Jubaid Hasan",
-    role: "Full Stack Developer",
+    role: "CEO & Full Stack Developer",
     image: "/creators/jubaid.jpg",
     description:
       "Architected the full-stack Next.js engine, speech recognition pipelines, real-time LLM integrations, and session storage.",
-    tag: "Engineering Lead",
+    tag: "Founder & CEO",
   },
 ];
 
@@ -42,70 +26,65 @@ export default function CreatorsPage() {
   const router = useRouter();
 
   return (
-    <div className="max-w-6xl mx-auto space-y-16 pb-20">
+    <div className="max-w-3xl mx-auto space-y-10 px-4 sm:px-6 py-6 pb-20 text-slate-900">
       {/* Top Back Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.push("/")}
-          className="inline-flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors glass-card px-4 py-2 rounded-xl border border-white/10"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors cloudkit-card px-4 py-2 rounded-full"
         >
-          ← Back to TotaPakhi Studio
+          ← Back to Parrot
         </button>
-        <span className="text-xs font-mono text-amber-400 font-bold uppercase tracking-widest">
-          MEET THE TEAM // CREATORS
+        <span className="text-xs font-mono text-slate-500 font-bold uppercase tracking-wider">
+          Creator
         </span>
       </div>
 
       {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <span className="text-xs font-mono font-extrabold uppercase tracking-[0.3em] text-amber-400">
-          THE BRAINS BEHIND TOTAPAKHI
-        </span>
-        <h1 className="text-4xl sm:text-6xl font-black text-white font-jakarta tracking-tight">
-          Meet the Creators
+      <div className="text-center space-y-2 max-w-xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-jakarta tracking-tight">
+          Meet the Creator
         </h1>
-        <p className="text-base text-zinc-300 leading-relaxed font-normal">
-          The team combining product design, data intelligence, and full-stack engineering to build the TotaPakhi AI Voice Studio.
+        <p className="text-sm text-slate-600 leading-relaxed font-normal">
+          Full-stack engineering, speech pipelines, and real-time AI intelligence behind Parrot.
         </p>
       </div>
 
-      {/* Creators Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {CREATORS.map((creator, idx) => (
+      {/* Creator Card */}
+      <div className="max-w-sm mx-auto w-full">
+        {CREATORS.map((creator) => (
           <div
             key={creator.name}
-            className="boon-card-interactive rounded-3xl overflow-hidden border border-white/10 flex flex-col justify-between group"
+            className="cloudkit-card rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between"
           >
             {/* Image Box */}
-            <div className="relative w-full h-80 sm:h-96 overflow-hidden bg-zinc-950">
+            <div className="relative w-full h-80 overflow-hidden bg-slate-100">
               <Image
                 src={creator.image}
                 alt={creator.name}
                 fill
-                className="object-cover object-top group-hover:scale-105 transition-transform duration-700 filter grayscale group-hover:grayscale-0"
-                priority={idx === 0}
+                className="object-cover object-top"
+                priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-90" />
-              
-              <div className="absolute top-4 right-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md">
-                  0{idx + 1} // {creator.tag}
+              <div className="absolute top-3 right-3">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/90 text-slate-800 shadow-sm border border-slate-200/60 backdrop-blur-md">
+                  {creator.tag}
                 </span>
               </div>
             </div>
 
             {/* Creator Info */}
-            <div className="p-6 sm:p-8 space-y-3 bg-[#0a0a0a]">
+            <div className="p-6 space-y-2 bg-white">
               <div>
-                <h3 className="text-xl font-bold text-white font-jakarta group-hover:text-amber-400 transition-colors">
+                <h3 className="text-lg font-bold text-slate-900 font-jakarta">
                   {creator.name}
                 </h3>
-                <p className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 mt-0.5">
+                <p className="text-xs font-semibold text-blue-600 mt-0.5">
                   {creator.role}
                 </p>
               </div>
 
-              <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+              <p className="text-xs text-slate-600 leading-relaxed font-normal">
                 {creator.description}
               </p>
             </div>

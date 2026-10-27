@@ -1,323 +1,263 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import PerchedHeroParrot from "@/components/TotaPakhiParrot";
-import DottedWavePattern from "@/components/DottedWavePattern";
 
-interface Creator {
-  name: string;
-  role: string;
-  image: string;
-  description: string;
-  tag: string;
-  badgeBg: string;
-  badgeText: string;
-  borderGlow: string;
-}
-
-const CREATORS: Creator[] = [
-  {
-    name: "Farhan Ashraf Muhaimin",
-    role: "Product Designing",
-    image: "/creators/farhan.jpg",
-    description:
-      "Crafting user-centric UI/UX design systems, modern visual ergonomics, and 3D interactive user experiences for TotaPakhi.",
-    tag: "Design Lead",
-    badgeBg: "bg-indigo-500/20",
-    badgeText: "text-indigo-300",
-    borderGlow: "hover:border-indigo-400",
-  },
-  {
-    name: "Raiyan Razi Rahman",
-    role: "Data Analyst",
-    image: "/creators/raiyan.jpg",
-    description:
-      "Engineered prompt-by-prompt speech metrics, filler word analytics, and quantitative IELTS criteria evaluation models.",
-    tag: "Data Lead",
-    badgeBg: "bg-purple-500/20",
-    badgeText: "text-purple-300",
-    borderGlow: "hover:border-purple-400",
-  },
-  {
-    name: "Md. Jubaid Hasan",
-    role: "Full Stack Developer",
-    image: "/creators/jubaid.jpg",
-    description:
-      "Architected the full-stack Next.js engine, speech recognition pipelines, real-time LLM integrations, and session storage.",
-    tag: "Engineering Lead",
-    badgeBg: "bg-amber-500/20",
-    badgeText: "text-amber-300",
-    borderGlow: "hover:border-amber-400",
-  },
-];
-
-export default function IntakePage() {
-  const router = useRouter();
-  const [startingTrack, setStartingTrack] = useState<string | null>(null);
-
-  const handleSelectTrack = async (
-    selectedTrack: "mock-interview" | "communication-builder" | "ielts-speaking"
-  ) => {
-    if (selectedTrack === "mock-interview") {
-      router.push("/mock-interview");
-      return;
-    }
-
-    setStartingTrack(selectedTrack);
-
-    try {
-      const res = await fetch("/api/interview/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ track: selectedTrack }),
-      });
-
-      const contentType = res.headers.get("content-type");
-      let data;
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        throw new Error(`Server returned ${res.status}: ${text.slice(0, 150)}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to start session.");
-      }
-
-      localStorage.setItem("currentSessionId", data.sessionId);
-
-      const history = JSON.parse(localStorage.getItem("sessionHistory") || "[]");
-      history.unshift({
-        sessionId: data.sessionId,
-        createdAt: new Date().toISOString(),
-        status: "in_progress",
-        track: selectedTrack,
-      });
-      localStorage.setItem("sessionHistory", JSON.stringify(history));
-
-      router.push(`/interview/${data.sessionId}`);
-    } catch (err) {
-      console.error("Failed to launch session", err);
-      setStartingTrack(null);
-    }
-  };
+export default function HomePage() {
+  const [activeTab, setActiveTab] = useState<"summary" | "voice">("summary");
 
   return (
-    <div className="max-w-7xl mx-auto space-y-24 pb-24">
-      {/* 💥 HERO SECTION (BOON / SEE WHAT EYE SEE Editorial Layout) 💥 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-4 sm:pt-8">
-        {/* Left Side: Massive Editorial Typography */}
-        <div className="lg:col-span-7 space-y-6 text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-xs font-mono font-bold text-amber-300 uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span>TOTAPAKHI VOICE INTELLIGENCE</span>
-          </div>
-
-          <h1 className="text-6xl sm:text-7xl md:text-[88px] font-black tracking-tighter text-amber-50 leading-[0.88] font-jakarta uppercase">
-            MASTER THE <br />
-            <span className="glow-text-gold">EFFECT.</span>
-          </h1>
-
-          <p className="text-zinc-300 text-base sm:text-xl max-w-xl leading-relaxed font-normal">
-            A reasoning & voice studio built around real-time AI feedback — designed for high-stakes interviews, structured communication frameworks, and official IELTS Speaking exams.
-          </p>
-
-          {/* Action Pills */}
-          <div className="pt-4 flex flex-wrap items-center gap-3">
-            <a
-              href="#practice-studios"
-              className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-amber-500/20 font-jakarta"
-            >
-              Select Your Studio ↓
-            </a>
-            <a
-              href="#creators-section"
-              className="px-6 py-3.5 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-xs font-mono text-zinc-300 transition-colors"
-            >
-              Meet Creators →
-            </a>
-          </div>
+    <div className="min-h-screen text-slate-900 pt-10 sm:pt-16 pb-24 overflow-x-hidden">
+      
+      {/* 🚀 HERO SECTION (Cloudkit Simple & Clean) 🚀 */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-6">
+        
+        {/* Top Pill Badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-white/90 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-md">
+          <span>⚡</span>
+          <span>The future of AI interview prep</span>
         </div>
 
-        {/* Right Side: Perched Mascot Character with "HELLO!" Speech Bubble */}
-        <div className="lg:col-span-5 flex justify-center lg:justify-end">
-          <PerchedHeroParrot />
-        </div>
-      </div>
+        {/* Big Bold Headline */}
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 font-jakarta leading-[1.08]">
+          Your unfair edge <br />
+          in job interviews
+        </h1>
 
-      {/* 💥 TRACK SELECTOR SECTION: "THE TOTAPAKHI DIFFERENCE" 💥 */}
-      <div id="practice-studios" className="relative space-y-12 pt-8">
-        {/* Dotted Amber Particle Arc SVG Background */}
-        <DottedWavePattern />
+        {/* Minimal Subtitle */}
+        <p className="text-base sm:text-lg text-slate-700 max-w-xl mx-auto leading-relaxed font-normal">
+          Practice realistic voice mock interviews with instant feedback on your spoken answers, STAR structure, and body language.
+        </p>
 
-        <div className="text-center space-y-3 relative z-10">
-          <span className="text-xs font-mono font-extrabold uppercase tracking-[0.3em] text-amber-400">
-            THE TOTAPAKHI DIFFERENCE
-          </span>
-          <h2 className="text-3xl sm:text-5xl font-black text-white font-jakarta tracking-tight">
-            Select Your Practice Studio Track
-          </h2>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto">
-            Click any studio below to launch directly into your practice session.
-          </p>
-        </div>
-
-        {/* 3 Luxury Dark Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-          {/* Card 1: Mock Interview */}
-          <div
-            onClick={() => handleSelectTrack("mock-interview")}
-            className="boon-card-interactive p-8 rounded-3xl cursor-pointer flex flex-col justify-between space-y-6 border border-white/10 group"
+        {/* Two Action Buttons */}
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <Link
+            href="/mock-interview"
+            className="px-7 py-3 rounded-full bg-white hover:bg-slate-50 text-slate-900 font-bold text-sm sm:text-base shadow-lg shadow-slate-900/10 hover:shadow-slate-900/15 transition-all duration-200 active:scale-95 border border-white"
           >
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-8 h-8 text-amber-400 stroke-current" fill="none" strokeWidth="2">
-                <circle cx="20" cy="20" r="16" strokeDasharray="3 3" />
-                <circle cx="20" cy="20" r="10" />
-                <circle cx="20" cy="20" r="4" fill="currentColor" />
-              </svg>
-            </div>
+            Start Interview
+          </Link>
+          <a
+            href="#body-language"
+            className="px-5 py-3 rounded-full text-slate-800 hover:text-slate-950 font-semibold text-sm sm:text-base transition-colors flex items-center gap-1.5"
+          >
+            <span>Body language summary</span>
+            <span className="text-slate-500 font-bold">›</span>
+          </a>
+        </div>
 
-            <div className="space-y-3">
-              <h3 className="text-xl font-bold text-white font-jakarta group-hover:text-amber-400 transition-colors">
-                Mock Interview
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                A reasoning partner built around your target job role & resume content. Tailored questions and instant STAR method analysis.
-              </p>
-            </div>
+      </section>
 
-            <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-              <span className="text-zinc-500">Job & Resume AI</span>
-              <span className="font-bold text-amber-400 group-hover:translate-x-1 transition-transform">
-                Configure & Launch →
+      {/* 🌟 FLOATING CLOUDKIT CARD PREVIEW 🌟 */}
+      <section id="body-language" className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16">
+        <div className="cloudkit-card rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+          
+          {/* Top Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-mono">
+                AI Mock Interview Session · Live Analysis
               </span>
             </div>
-          </div>
 
-          {/* Card 2: Communication Builder */}
-          <div
-            onClick={() => handleSelectTrack("communication-builder")}
-            className="boon-card-interactive p-8 rounded-3xl cursor-pointer flex flex-col justify-between space-y-6 border border-white/10 group"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-8 h-8 text-amber-400 stroke-current" fill="none" strokeWidth="2">
-                <circle cx="20" cy="20" r="16" />
-                <ellipse cx="20" cy="20" rx="16" ry="6" strokeDasharray="2 2" />
-                <ellipse cx="20" cy="20" rx="6" ry="16" strokeDasharray="2 2" />
-              </svg>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-xl font-bold text-white font-jakarta group-hover:text-amber-400 transition-colors">
-                Communication Builder
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                Master STAR, CAR, SEE & PAR frameworks with sentence-by-sentence breakdowns for interviews, teaching, and small talk.
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-              <span className="text-zinc-500">4 Frameworks</span>
-              <span className="font-bold text-amber-400 group-hover:translate-x-1 transition-transform">
-                {startingTrack === "communication-builder" ? "Launching..." : "Launch Practice →"}
-              </span>
+            {/* Simple Tab Switcher */}
+            <div className="flex items-center gap-1 p-1 rounded-full bg-slate-100 text-xs font-semibold">
+              <button
+                onClick={() => setActiveTab("summary")}
+                className={`px-3 py-1 rounded-full transition-all ${
+                  activeTab === "summary" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                📹 Body Language
+              </button>
+              <button
+                onClick={() => setActiveTab("voice")}
+                className={`px-3 py-1 rounded-full transition-all ${
+                  activeTab === "voice" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                🎙️ Voice & STAR
+              </button>
             </div>
           </div>
 
-          {/* Card 3: IELTS Speaking */}
-          <div
-            id="track-ielts-btn"
-            onClick={() => handleSelectTrack("ielts-speaking")}
-            className="boon-card-interactive p-8 rounded-3xl cursor-pointer flex flex-col justify-between space-y-6 border border-white/10 group"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-              <svg viewBox="0 0 40 40" className="w-8 h-8 text-amber-400 stroke-current" fill="none" strokeWidth="2">
-                <circle cx="20" cy="20" r="16" strokeDasharray="4 4" />
-                <line x1="4" y1="20" x2="36" y2="20" />
-                <line x1="20" y1="4" x2="20" y2="36" />
-              </svg>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="text-xl font-bold text-white font-jakarta group-hover:text-amber-400 transition-colors">
-                IELTS Speaking
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                Authentic 3-part exam flow across Part 1 personal, Part 2 Cue Card, and Part 3 discussion prompts with Band 1–9 analysis.
-              </p>
-            </div>
-
-            <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-              <span className="text-zinc-500">Parts 1, 2 & 3</span>
-              <span className="font-bold text-amber-400 group-hover:translate-x-1 transition-transform">
-                {startingTrack === "ielts-speaking" ? "Launching..." : "Launch Exam →"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 💥 COLORFUL CREATORS SECTION AT BOTTOM OF HOMEPAGE 💥 */}
-      <div id="creators-section" className="space-y-10 pt-16 border-t border-white/10">
-        <div className="text-center space-y-3">
-          <span className="text-xs font-mono font-extrabold uppercase tracking-[0.3em] text-amber-400">
-            THE ARCHITECTS BEHIND TOTAPAKHI
-          </span>
-          <h2 className="text-3xl sm:text-5xl font-black text-white font-jakarta tracking-tight">
-            Meet the Creators
-          </h2>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto">
-            The team combining product design, data analytics, and full-stack engineering.
-          </p>
-        </div>
-
-        {/* 3 Vibrant Full-Color Creator Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {CREATORS.map((creator, idx) => (
-            <div
-              key={creator.name}
-              className={`boon-card-interactive rounded-3xl overflow-hidden border border-white/15 flex flex-col justify-between group transition-all duration-300 ${creator.borderGlow}`}
-            >
-              {/* Full-Color Photo Container (NO Grayscale) */}
-              <div className="relative w-full h-80 sm:h-96 overflow-hidden bg-zinc-950">
-                <Image
-                  src={creator.image}
-                  alt={creator.name}
-                  fill
-                  className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-80" />
-
-                <div className="absolute top-4 right-4">
-                  <span className={`text-[10px] font-mono font-bold uppercase tracking-widest px-3.5 py-1 rounded-full ${creator.badgeBg} ${creator.badgeText} border border-white/20 backdrop-blur-md shadow-lg`}>
-                    0{idx + 1} // {creator.tag}
-                  </span>
-                </div>
-              </div>
-
-              {/* Creator Info Box */}
-              <div className="p-6 sm:p-8 space-y-3 bg-[#0a0a0a]">
-                <div>
-                  <h3 className="text-xl font-bold text-white font-jakarta group-hover:text-amber-400 transition-colors">
-                    {creator.name}
-                  </h3>
-                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 mt-0.5">
-                    {creator.role}
-                  </p>
-                </div>
-
-                <p className="text-xs text-zinc-300 leading-relaxed font-normal">
-                  {creator.description}
+          {/* Main Simulation Content */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            
+            {/* Left Column: Simulated Interview Data */}
+            <div className="md:col-span-8 space-y-4">
+              
+              {/* Question */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-blue-600 font-bold">
+                  Prompt · Senior Software Engineer
+                </span>
+                <p className="text-sm sm:text-base font-semibold text-slate-900 leading-snug">
+                  &ldquo;Describe a major system migration you led under strict latency requirements. How did you validate your trade-offs?&rdquo;
                 </p>
               </div>
+
+              {/* TAB 1: BODY LANGUAGE SUMMARY */}
+              {activeTab === "summary" && (
+                <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <span>Summary of Your Body Language</span>
+                    <span className="text-emerald-600 font-bold">Score: 94 / 100</span>
+                  </div>
+
+                  {/* 3 Simple Metric Bars */}
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">Eye Contact</div>
+                      <div className="text-base font-extrabold text-slate-900">92%</div>
+                      <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">Confident</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">Composure</div>
+                      <div className="text-base font-extrabold text-slate-900">Steady</div>
+                      <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">Low Fidget</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">Posture</div>
+                      <div className="text-base font-extrabold text-slate-900">Upright</div>
+                      <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">Engaged</div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    💡 <strong>Summary:</strong> Excellent direct camera gaze and upright posture. Zero nervous fidgeting detected while explaining the architecture.
+                  </p>
+                </div>
+              )}
+
+              {/* TAB 2: VOICE & STAR */}
+              {activeTab === "voice" && (
+                <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <span>Voice Analysis & Pacing</span>
+                    <span className="text-blue-600 font-bold">140 WPM · Optimal</span>
+                  </div>
+
+                  {/* Waveform */}
+                  <div className="flex items-center justify-center gap-1.5 h-10 bg-slate-50 rounded-xl px-4">
+                    <div className="w-1.5 bg-blue-500 rounded-full animate-wave-1" />
+                    <div className="w-1.5 bg-blue-400 rounded-full animate-wave-2" />
+                    <div className="w-1.5 bg-blue-600 rounded-full animate-wave-3" />
+                    <div className="w-1.5 bg-blue-500 rounded-full animate-wave-4" />
+                    <div className="w-1.5 bg-blue-400 rounded-full animate-wave-5" />
+                    <div className="w-1.5 bg-blue-600 rounded-full animate-wave-2" />
+                    <div className="w-1.5 bg-blue-500 rounded-full animate-wave-1" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">STAR Framework</div>
+                      <div className="text-sm font-extrabold text-slate-900">Situation + Action + Result</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">Filler Words</div>
+                      <div className="text-sm font-extrabold text-emerald-600">0 &ldquo;ums&rdquo; detected</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
-          ))}
+
+            {/* Right Column: Parrot Mascot */}
+            <div className="md:col-span-4 flex flex-col items-center justify-center">
+              <PerchedHeroParrot />
+            </div>
+
+          </div>
+
+          {/* Bottom Card Action */}
+          <div className="pt-2 text-center">
+            <Link
+              href="/mock-interview"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1"
+            >
+              <span>Launch this mock interview</span>
+              <span>→</span>
+            </Link>
+          </div>
+
         </div>
-      </div>
+      </section>
+
+      {/* ⚡ 3 SIMPLE VALUE PILLARS (Minimal Wording) ⚡ */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div className="cloudkit-card rounded-2xl p-5 shadow-sm space-y-2">
+          <div className="text-2xl">🎙️</div>
+          <h3 className="text-sm font-bold text-slate-900 font-jakarta">Spoken Voice AI</h3>
+          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            Real-time feedback on speaking pace, filler words, and STAR structured answers.
+          </p>
+        </div>
+
+        <div className="cloudkit-card rounded-2xl p-5 shadow-sm space-y-2">
+          <div className="text-2xl">📹</div>
+          <h3 className="text-sm font-bold text-slate-900 font-jakarta">Body Language Summary</h3>
+          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            Webcam eye contact, composure, and posture tracking running 100% locally.
+          </p>
+        </div>
+
+        <div className="cloudkit-card rounded-2xl p-5 shadow-sm space-y-2">
+          <div className="text-2xl">📊</div>
+          <h3 className="text-sm font-bold text-slate-900 font-jakarta">Instant Scorecard</h3>
+          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            Actionable breakdown and model answers to help you win real offers.
+          </p>
+        </div>
+
+      </section>
+
+      {/* 👤 CREATOR */}
+      <section className="max-w-md mx-auto px-4 pt-16 text-center">
+        <div className="inline-flex items-center gap-3 p-3 rounded-2xl cloudkit-card shadow-sm text-left">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-slate-200">
+            <Image
+              src="/creators/jubaid.jpg"
+              alt="Md. Jubaid Hasan"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-900 font-jakarta">
+              Md. Jubaid Hasan
+            </div>
+            <div className="text-[11px] font-mono text-slate-500">
+              CEO & Full Stack Developer · Creator of Parrot
+            </div>
+          </div>
+          <Link
+            href="/creators"
+            className="ml-auto text-xs font-medium text-blue-600 hover:text-blue-700 px-2 py-1"
+          >
+            Profile →
+          </Link>
+        </div>
+      </section>
+
+      {/* Minimal Footer */}
+      <footer className="max-w-4xl mx-auto px-4 pt-12 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-300/40 mt-12">
+        <div>© 2026 Parrot AI · Smart Interview Practice</div>
+        <div className="flex items-center gap-4 font-medium">
+          <Link href="/mock-interview" className="hover:text-slate-900 transition-colors">
+            Mock Interview
+          </Link>
+          <Link href="/creators" className="hover:text-slate-900 transition-colors">
+            Creator
+          </Link>
+        </div>
+      </footer>
+
     </div>
   );
 }
