@@ -124,9 +124,9 @@ export default function CameraPreview({
   const yawDeg = liveFrame ? Math.round(Math.abs(liveFrame.yaw)) : 0;
 
   const ringColor = !faceDetected
-    ? "border-slate-300"
+    ? "border-stone-soft/40"
     : eyeContact
-    ? "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.35)]"
+    ? "border-moss-light shadow-[0_0_20px_rgba(52,211,153,0.35)]"
     : "border-orange-400 shadow-[0_0_20px_rgba(251,146,60,0.35)]";
 
   const eyeLabel = !faceDetected
@@ -136,17 +136,17 @@ export default function CameraPreview({
     : `Look at camera (${yawDeg}°)`;
 
   const eyeLabelColor = !faceDetected
-    ? "text-slate-600"
+    ? "text-stone-muted"
     : eyeContact
-    ? "text-emerald-600"
+    ? "text-moss"
     : "text-orange-600";
 
   return (
     <div
       className={`relative transition-all duration-300 ${
         isMinimized
-          ? "w-44 rounded-2xl p-2.5 glass-card border border-slate-200 shadow-lg"
-          : "w-full sm:w-80 rounded-3xl p-3 glass-card border border-slate-300 shadow-2xl overflow-hidden"
+          ? "w-44 rounded-2xl p-2.5 glass-card border border-line shadow-lg"
+          : "w-full sm:w-80 rounded-3xl p-3 glass-card border border-stone-soft/40 shadow-2xl overflow-hidden"
       }`}
     >
       {/* ── Header ── */}
@@ -155,16 +155,16 @@ export default function CameraPreview({
           <span className="relative flex h-2 w-2">
             <span
               className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                isRecording ? "bg-red-400" : "bg-emerald-400"
+                isRecording ? "bg-beak" : "bg-moss-light"
               }`}
             />
             <span
               className={`relative inline-flex rounded-full h-2 w-2 ${
-                isRecording ? "bg-red-500" : "bg-emerald-500"
+                isRecording ? "bg-beak" : "bg-moss-light"
               }`}
             />
           </span>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink/80">
             {isRecording ? "Analyzing Live" : "Body Language"}
           </span>
         </div>
@@ -173,7 +173,7 @@ export default function CameraPreview({
             type="button"
             onClick={() => setIsMinimized((p) => !p)}
             title={isMinimized ? "Expand" : "Minimize"}
-            className="p-1 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors text-[10px]"
+            className="p-1 text-stone-muted hover:text-ink rounded-lg hover:bg-cream transition-colors text-[10px]"
           >
             {isMinimized ? "↗" : "↘"}
           </button>
@@ -182,7 +182,7 @@ export default function CameraPreview({
               type="button"
               onClick={onDisableCamera}
               title="Turn Off Camera"
-              className="p-1 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-500/10 transition-colors text-[10px]"
+              className="p-1 text-stone-soft hover:text-beak rounded-lg hover:bg-beak/10 transition-colors text-[10px]"
             >
               ✕
             </button>
@@ -194,7 +194,7 @@ export default function CameraPreview({
       {!isMinimized && (
         <div className="space-y-3">
           {/* Colored ring signals eye-contact quality */}
-          <div className={`relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-slate-100 border-2 transition-all duration-500 ${ringColor}`}>
+          <div className={`relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-cream border-2 transition-all duration-500 ${ringColor}`}>
             {/* Live video feed (mirrored) */}
             <video
               ref={localVideoRef}
@@ -212,15 +212,15 @@ export default function CameraPreview({
 
             {/* Eye contact label badge — top right */}
             <div
-              className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-50 backdrop-blur-md border border-slate-200 text-[10px] font-bold transition-all duration-300 ${eyeLabelColor}`}
+              className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-xl bg-cream/60 backdrop-blur-md border border-line text-[10px] font-bold transition-all duration-300 ${eyeLabelColor}`}
             >
               {!faceDetected ? "👤 " : eyeContact ? "👁️ " : "↔️ "}
               {eyeLabel}
             </div>
 
             {/* Privacy badge — top left */}
-            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-50 backdrop-blur-md border border-slate-200 text-[9px] font-mono text-slate-600">
-              <svg className="w-2.5 h-2.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-cream/60 backdrop-blur-md border border-line text-[9px] font-mono text-stone-muted">
+              <svg className="w-2.5 h-2.5 text-moss" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
               </svg>
               On-device
@@ -228,8 +228,8 @@ export default function CameraPreview({
 
             {/* "Analyzing" pulse overlay during recording */}
             {isRecording && faceDetected && (
-              <div className="absolute bottom-2 inset-x-2 flex items-center justify-center gap-1.5 py-1 px-2 rounded-xl bg-indigo-50 border border-indigo-500/40 text-[10px] font-semibold text-indigo-800 backdrop-blur-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              <div className="absolute bottom-2 inset-x-2 flex items-center justify-center gap-1.5 py-1 px-2 rounded-xl bg-moss/5 border border-moss-light/40 text-[10px] font-semibold text-moss-deep backdrop-blur-md">
+                <span className="w-1.5 h-1.5 rounded-full bg-moss-light animate-pulse" />
                 Tracking gaze &amp; stability
               </div>
             )}
@@ -238,29 +238,29 @@ export default function CameraPreview({
           {/* ── Live metric chips ── */}
           <div className="grid grid-cols-2 gap-2">
             {/* Eye contact chip */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-cream/60 border border-line">
               <span className="text-base">{eyeContact ? "👁️" : "↔️"}</span>
               <div>
-                <p className="text-[9px] font-mono text-slate-500 uppercase tracking-wide">Eye Contact</p>
-                <p className={`text-[11px] font-bold ${eyeContact ? "text-emerald-600" : "text-orange-600"}`}>
+                <p className="text-[9px] font-mono text-stone-soft uppercase tracking-wide">Eye Contact</p>
+                <p className={`text-[11px] font-bold ${eyeContact ? "text-moss" : "text-orange-600"}`}>
                   {!faceDetected ? "—" : eyeContact ? "Good" : "Look forward"}
                 </p>
               </div>
             </div>
 
             {/* Head angle chip */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-cream/60 border border-line">
               <span className="text-base">📐</span>
               <div>
-                <p className="text-[9px] font-mono text-slate-500 uppercase tracking-wide">Head Angle</p>
-                <p className={`text-[11px] font-bold ${faceDetected && yawDeg <= 10 ? "text-emerald-600" : yawDeg <= 20 ? "text-yellow-600" : "text-orange-600"}`}>
+                <p className="text-[9px] font-mono text-stone-soft uppercase tracking-wide">Head Angle</p>
+                <p className={`text-[11px] font-bold ${faceDetected && yawDeg <= 10 ? "text-moss" : yawDeg <= 20 ? "text-yellow-600" : "text-orange-600"}`}>
                   {!faceDetected ? "—" : yawDeg <= 5 ? "Centered ✓" : `${liveFrame && liveFrame.yaw < 0 ? "←" : "→"} ${yawDeg}°`}
                 </p>
               </div>
             </div>
           </div>
 
-          <p className="text-[9px] text-center text-slate-500 font-mono">
+          <p className="text-[9px] text-center text-stone-soft font-mono">
             Green border = good eye contact • Orange = look at screen
           </p>
         </div>

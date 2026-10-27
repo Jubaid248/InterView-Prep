@@ -578,7 +578,7 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
   return (
     <div className="flex flex-col items-center gap-5 w-full max-w-xl mx-auto">
       {permissionDenied && (
-        <div className="bg-red-500/15 border border-red-500/40 rounded-2xl p-4 text-center text-red-700 text-xs sm:text-sm shadow-xl backdrop-blur-md">
+        <div className="bg-beak/15 border border-beak/40 rounded-2xl p-4 text-center text-beak-deep text-xs sm:text-sm shadow-xl backdrop-blur-md">
           Microphone access denied. Please allow microphone permissions in your browser.
         </div>
       )}
@@ -592,24 +592,24 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
               <span className="relative flex h-3 w-3">
                 <span
                   className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    isRecording ? "bg-red-400" : "bg-slate-300"
+                    isRecording ? "bg-beak" : "bg-line"
                   }`}
                 />
                 <span
                   className={`relative inline-flex rounded-full h-3 w-3 ${
-                    isRecording ? "bg-red-500" : "bg-slate-400"
+                    isRecording ? "bg-beak" : "bg-stone-soft"
                   }`}
                 />
               </span>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink">
                 {isRecording ? "Live Automatic Recording" : "Standby • Floor to You"}
               </span>
             </div>
 
             {/* Time Elapsed */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-100 border border-slate-200 font-mono text-xs">
-              <span className="text-slate-600">Duration:</span>
-              <span className={`font-bold ${isRecording ? "text-red-600" : "text-slate-600"}`}>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-cream border border-line font-mono text-xs">
+              <span className="text-stone-muted">Duration:</span>
+              <span className={`font-bold ${isRecording ? "text-beak" : "text-stone-muted"}`}>
                 {formatTime(elapsed)}
               </span>
             </div>
@@ -617,12 +617,12 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
 
           {/* Equalizer Waveform & Live Listening Feedback */}
           {isRecording ? (
-            <div className="w-full p-5 rounded-2xl bg-slate-50 border border-red-500/30 flex flex-col items-center gap-3 shadow-inner">
+            <div className="w-full p-5 rounded-2xl bg-cream/60 border border-beak/30 flex flex-col items-center gap-3 shadow-inner">
               <div className="flex items-center gap-1.5 h-10 px-4">
                 {[12, 24, 16, 32, 20, 28, 14, 34, 22, 18, 26, 14, 30, 20, 16, 24].map((height, i) => (
                   <div
                     key={i}
-                    className="w-1.5 bg-gradient-to-t from-red-600 via-rose-400 to-amber-300 rounded-full"
+                    className="w-1.5 bg-gradient-to-t from-beak via-beak to-amber-300 rounded-full"
                     style={{
                       height: `${height}px`,
                       animation: `waveBarDynamic 1.${(i % 6) + 2}s ease-in-out infinite alternate`,
@@ -632,14 +632,14 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
               </div>
 
               {/* Listening Status */}
-              <p className="text-xs text-slate-700 font-medium text-center">
+              <p className="text-xs text-ink/80 font-medium text-center">
                 {userHasSpoken
                   ? "🎙️ Listening... Submits automatically when you finish speaking."
                   : "🎙️ Microphone is live. Take your time, then speak your response."}
               </p>
             </div>
           ) : (
-            <div className="w-full p-4 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-600">
+            <div className="w-full p-4 rounded-2xl bg-cream border border-line flex items-center justify-center text-xs text-stone-muted">
               Parrot is speaking. Microphone turns on automatically once Parrot finishes.
             </div>
           )}
@@ -649,7 +649,7 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
             <div className="flex items-center justify-end w-full px-2 pt-1">
               <button
                 onClick={() => stopRecordingRef.current()}
-                className="text-[11px] font-mono text-slate-500 hover:text-slate-900 underline hover:no-underline font-semibold transition-colors"
+                className="text-[11px] font-mono text-stone-soft hover:text-ink underline hover:no-underline font-semibold transition-colors"
               >
                 Submit now →
               </button>
@@ -662,8 +662,8 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
           <div className="relative flex items-center justify-center p-2">
             {isRecording && (
               <>
-                <div className="absolute inset-0 rounded-full bg-red-500/30 animate-pulse-glow" />
-                <div className="absolute -inset-6 rounded-full bg-gradient-to-r from-red-600/30 via-rose-500/25 to-amber-500/30 blur-xl animate-pulse" />
+                <div className="absolute inset-0 rounded-full bg-beak/30 animate-pulse-glow" />
+                <div className="absolute -inset-6 rounded-full bg-beak/20 blur-xl animate-pulse" />
               </>
             )}
 
@@ -671,11 +671,11 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
               <button
                 onClick={startRecording}
                 disabled={disabled}
-                className="group relative flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-tr from-rose-600 via-red-500 to-amber-500 hover:from-rose-500 hover:via-red-400 hover:to-amber-400 disabled:from-slate-100 disabled:to-slate-50 disabled:cursor-not-allowed transition-all duration-300 shadow-[0_15px_35px_rgba(239,68,68,0.5)] hover:shadow-[0_20px_45px_rgba(239,68,68,0.7)] hover:scale-105 active:scale-95 border-2 border-slate-300"
+                className="group relative flex items-center justify-center w-24 h-24 rounded-full bg-moss hover:bg-moss-deep disabled:bg-line disabled:cursor-not-allowed transition-all duration-300 shadow-[0_5px_0_#1C3B16,0_18px_30px_-12px_rgba(47,94,37,0.6)] hover:scale-105 active:translate-y-[4px] active:shadow-none"
                 title="Tap to start recording"
               >
                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                  <svg className="w-5 h-5 text-red-600 fill-current" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-moss fill-current" viewBox="0 0 24 24">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                     <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                   </svg>
@@ -684,7 +684,7 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
             ) : (
               <button
                 onClick={() => stopRecordingRef.current()}
-                className="group relative flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 transition-all duration-300 shadow-[0_20px_45px_rgba(225,29,72,0.8)] scale-105 border-2 border-slate-300"
+                className="group relative flex items-center justify-center w-24 h-24 rounded-full bg-beak transition-all duration-300 shadow-[0_18px_34px_-10px_rgba(226,67,43,0.7)] scale-105"
                 title="Tap to stop and submit answer"
               >
                 <div className="w-8 h-8 rounded-lg bg-white shadow-inner group-hover:scale-90 transition-transform" />
@@ -695,20 +695,20 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
           {/* Practice Timer & Prompt */}
           <div className="flex items-center gap-3">
             {isRecording ? (
-              <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-red-500/15 border border-red-500/40 backdrop-blur-xl shadow-2xl shadow-red-500/20">
+              <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-beak/15 border border-beak/40 backdrop-blur-xl shadow-2xl shadow-beak/20">
                 <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-beak opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-beak" />
                 </span>
-                <span className="text-red-700 font-mono font-black text-lg tabular-nums tracking-widest">
+                <span className="text-beak-deep font-mono font-semibold text-lg tabular-nums tracking-widest">
                   {formatTime(elapsed)}
                 </span>
-                <span className="text-[10px] font-black uppercase text-red-700 tracking-widest border-l border-red-500/30 pl-3">
+                <span className="text-[10px] font-semibold uppercase text-beak-deep tracking-widest border-l border-beak/30 pl-3">
                   Recording • Tap Square To Finish
                 </span>
               </div>
             ) : (
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-xs font-semibold text-ink/80">
                 Tap microphone when ready to speak
               </span>
             )}
@@ -716,11 +716,11 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
 
           {/* Equalizer Waveform in Practice */}
           {isRecording && (
-            <div className="flex items-center gap-2 h-10 px-8 py-2 rounded-2xl bg-slate-50 border border-slate-300 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-center gap-2 h-10 px-8 py-2 rounded-2xl bg-cream/60 border border-stone-soft/40 backdrop-blur-xl shadow-2xl">
               {[14, 28, 18, 36, 22, 32, 16, 38, 24, 20, 30, 16, 34, 22, 18, 26].map((height, i) => (
                 <div
                   key={i}
-                  className="w-1.5 bg-gradient-to-t from-red-600 via-rose-400 to-amber-300 rounded-full"
+                  className="w-1.5 bg-gradient-to-t from-beak via-beak to-amber-300 rounded-full"
                   style={{
                     height: `${height}px`,
                     animation: `waveBarDynamic 1.${(i % 6) + 2}s ease-in-out infinite alternate`,
@@ -734,17 +734,17 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
 
       {/* Floating Glass Speech Recognition Terminal */}
       {isRecording && liveTranscript && (
-        <div className="w-full rounded-2xl bg-slate-50 border border-indigo-500/40 p-4 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+        <div className="w-full rounded-2xl bg-cream/60 border border-moss-light/40 p-4 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-line">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-indigo-700 font-jakarta">
+              <span className="w-2 h-2 rounded-full bg-moss-light animate-ping" />
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-moss-deep">
                 Live Speech Recognition
               </span>
             </div>
-            <span className="text-[10px] font-mono text-slate-600">Transcribing</span>
+            <span className="text-[10px] font-mono text-stone-muted">Transcribing</span>
           </div>
-          <div className="max-h-28 overflow-y-auto pr-2 text-xs text-slate-900 leading-relaxed italic">
+          <div className="max-h-28 overflow-y-auto pr-2 text-xs text-ink leading-relaxed italic">
             &ldquo;{liveTranscript}&rdquo;
           </div>
         </div>

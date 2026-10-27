@@ -48,20 +48,20 @@ export default function QuestionCard({
     });
 
   return (
-    <div className="w-full glass-card rounded-2xl p-6 sm:p-8 space-y-4 border border-slate-200 relative overflow-hidden shadow-2xl">
+    <div className="w-full glass-card rounded-2xl p-6 sm:p-8 space-y-4 border border-line relative overflow-hidden shadow-2xl">
       {/* Decorative top glow */}
       <div
         className={`absolute top-0 left-0 right-0 h-1 ${isFollowUp
             ? "bg-gradient-to-r from-amber-500 via-orange-400 to-amber-500"
-            : "bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400"
+            : "bg-gradient-to-r from-moss-light via-tealbird to-tealbird-light"
           }`}
       />
 
       <div className="flex items-center justify-between flex-wrap gap-2">
         <span
-          className={`text-[11px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border ${isFollowUp
+          className={`text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${isFollowUp
               ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
-              : "bg-indigo-500/15 text-indigo-700 border-indigo-500/30"
+              : "bg-moss-light/15 text-moss-deep border-moss-light/30"
             }`}
         >
           {isFollowUp
@@ -78,7 +78,7 @@ export default function QuestionCard({
         />
       </div>
 
-      <p className="text-lg sm:text-xl text-slate-900 leading-relaxed font-semibold tracking-tight font-jakarta">
+      <p className="text-lg sm:text-xl text-ink leading-relaxed font-semibold tracking-tight">
         {displayText}
       </p>
     </div>

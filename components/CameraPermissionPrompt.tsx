@@ -14,17 +14,17 @@ export default function CameraPermissionPrompt({
   errorMessage,
 }: CameraPermissionPromptProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50 backdrop-blur-xl p-4">
-      <div className="relative w-full max-w-md glass-card rounded-3xl border border-slate-300 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-cream/60 backdrop-blur-xl p-4">
+      <div className="relative w-full max-w-md glass-card rounded-3xl border border-stone-soft/40 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400">
         {/* Top gradient accent */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-tealbird via-moss-light to-tealbird-light" />
 
         <div className="p-8 space-y-6">
           {/* Icon */}
           <div className="flex items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-500/10">
+            <div className="w-16 h-16 rounded-2xl bg-moss-light/15 border border-moss-light/30 flex items-center justify-center shadow-lg shadow-moss-light/10">
               <svg
-                className="w-8 h-8 text-indigo-700"
+                className="w-8 h-8 text-moss-deep"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -41,20 +41,20 @@ export default function CameraPermissionPrompt({
 
           {/* Heading */}
           <div className="text-center space-y-2">
-            <h2 className="text-xl font-extrabold text-slate-900 font-jakarta leading-snug">
+            <h2 className="font-serif font-normal text-2xl text-ink leading-snug">
               Want body language feedback too?
             </h2>
-            <p className="text-sm text-slate-700 leading-relaxed">
+            <p className="text-sm text-ink/80 leading-relaxed">
               Parrot can analyze your{" "}
-              <span className="text-indigo-700 font-semibold">eye contact</span> and{" "}
-              <span className="text-indigo-700 font-semibold">movement</span> during each answer — entirely on your device.
+              <span className="text-moss-deep font-semibold">eye contact</span> and{" "}
+              <span className="text-moss-deep font-semibold">movement</span> during each answer — entirely on your device.
             </p>
           </div>
 
           {/* Privacy guarantee */}
-          <div className="flex items-start gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-800 leading-relaxed">
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-moss-light/10 border border-moss-light/25 text-xs text-moss-deep leading-relaxed">
             <svg
-              className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"
+              className="w-4 h-4 text-moss shrink-0 mt-0.5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -67,14 +67,14 @@ export default function CameraPermissionPrompt({
               />
             </svg>
             <span>
-              <strong className="text-emerald-700">Your video never leaves your device.</strong>{" "}
+              <strong className="text-moss">Your video never leaves your device.</strong>{" "}
               Only two computed numbers (eye contact % and movement level) are included in your feedback report. No video is stored or transmitted.
             </span>
           </div>
 
           {/* Error message */}
           {errorMessage && (
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-xs text-red-700 leading-relaxed">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-beak/10 border border-beak/25 text-xs text-beak-deep leading-relaxed">
               <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
@@ -88,7 +88,7 @@ export default function CameraPermissionPrompt({
               id="enable-camera-btn"
               onClick={onEnable}
               disabled={isRequesting}
-              className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-indigo-500/25 hover:scale-[1.02] active:scale-95"
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-moss hover:bg-moss-deep disabled:opacity-50 text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-moss-light/25 hover:scale-[1.02] active:scale-95"
             >
               {isRequesting ? (
                 <>
@@ -112,14 +112,14 @@ export default function CameraPermissionPrompt({
               id="skip-camera-btn"
               onClick={onSkip}
               disabled={isRequesting}
-              className="flex-1 px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-sm tracking-wide transition-all"
+              className="flex-1 px-5 py-3.5 rounded-2xl bg-cream hover:bg-line border border-line text-ink/80 hover:text-ink font-semibold text-sm tracking-wide transition-all"
             >
               Skip, audio only
             </button>
           </div>
 
           {/* Fine print */}
-          <p className="text-center text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-center text-[11px] text-stone-soft leading-relaxed">
             You can start without camera and won&apos;t be asked again this session.
             Body language signals appear only if camera was enabled.
           </p>

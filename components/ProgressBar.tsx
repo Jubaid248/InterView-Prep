@@ -13,17 +13,17 @@ export default function ProgressBar({
 
   return (
     <div className="w-full space-y-2">
-      <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-        <span className="flex items-center gap-1.5 uppercase tracking-wider text-slate-700">
-          <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50" />
+      <div className="flex items-center justify-between text-xs font-semibold text-stone-muted">
+        <span className="flex items-center gap-1.5 uppercase tracking-wider text-ink/80">
+          <span className="w-2 h-2 rounded-full bg-moss-light shadow-sm shadow-moss-light/50" />
           Progress Status
         </span>
         <div className="flex items-center gap-2 font-mono">
-          <span className="text-slate-800 font-bold">
+          <span className="text-ink font-bold">
             {Math.min(current + 1, total)} of {total}
           </span>
-          <span className="text-slate-400">•</span>
-          <span className="text-indigo-600 font-extrabold">{percentage}%</span>
+          <span className="text-stone-soft">•</span>
+          <span className="text-moss font-semibold">{percentage}%</span>
           {awaitingFollowUp && (
             <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 text-[10px] font-sans uppercase font-bold tracking-wider">
               Follow-up Active
@@ -33,9 +33,9 @@ export default function ProgressBar({
       </div>
 
       {/* Track Bar with Neon Glow Tip */}
-      <div className="w-full h-2.5 bg-slate-100 rounded-full border border-slate-200 p-0.5 relative overflow-hidden backdrop-blur-md">
+      <div className="w-full h-2.5 bg-cream rounded-full border border-line p-0.5 relative overflow-hidden backdrop-blur-md">
         <div
-          className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 rounded-full transition-all duration-700 ease-out relative shadow-sm shadow-indigo-500/50"
+          className="h-full bg-gradient-to-r from-moss-light via-tealbird to-tealbird-light rounded-full transition-all duration-700 ease-out relative shadow-sm shadow-moss-light/50"
           style={{ width: `${percentage}%` }}
         >
           <div className="absolute right-0 top-0 bottom-0 w-3 bg-white/80 rounded-full blur-[2px] animate-pulse" />

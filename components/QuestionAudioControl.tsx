@@ -29,22 +29,22 @@ export default function QuestionAudioControl({
           aria-label={audioEnabled ? "Turn questions audio off" : "Turn questions audio on"}
           className={`group flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all duration-200 border backdrop-blur-md shadow-sm ${
             audioEnabled
-              ? "bg-emerald-500/15 border-emerald-500/35 text-emerald-700 hover:bg-emerald-500/25"
-              : "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-200"
+              ? "bg-moss-light/15 border-moss-light/35 text-moss hover:bg-moss-light/25"
+              : "bg-cream border-line text-stone-muted hover:text-ink hover:bg-line"
           }`}
         >
           {audioEnabled ? (
             <>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-moss-light opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-moss-light" />
               </span>
               <span className="text-sm">🔊</span>
               <span className="tracking-wider">Voice: ON</span>
             </>
           ) : (
             <>
-              <span className="w-2 h-2 rounded-full bg-slate-300" />
+              <span className="w-2 h-2 rounded-full bg-line" />
               <span className="text-sm">🔇</span>
               <span className="tracking-wider">Voice: OFF</span>
             </>
@@ -77,7 +77,7 @@ export default function QuestionAudioControl({
         <button
           type="button"
           onClick={onSpeak}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 hover:border-amber-400/40 text-slate-700 hover:text-amber-700 text-xs font-semibold transition-all hover:bg-slate-200"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream border border-line hover:border-amber-400/40 text-ink/80 hover:text-amber-700 text-xs font-semibold transition-all hover:bg-line"
           title="Read this question aloud"
         >
           <span className="text-xs">🔊</span>
@@ -91,8 +91,8 @@ export default function QuestionAudioControl({
         onClick={() => onToggleAudio(!audioEnabled)}
         className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-mono transition-colors border ${
           audioEnabled
-            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
-            : "border-slate-200 bg-slate-50 text-slate-600 hover:text-slate-800"
+            ? "border-moss-light/30 bg-moss-light/10 text-moss hover:bg-moss-light/20"
+            : "border-line bg-cream/60 text-stone-muted hover:text-ink"
         }`}
         title={audioEnabled ? "Audio questions enabled (click to mute)" : "Audio questions muted (click to enable)"}
       >

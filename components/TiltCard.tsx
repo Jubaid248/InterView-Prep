@@ -7,7 +7,7 @@ interface TiltCardProps {
   className?: string;
   onClick?: () => void;
   active?: boolean;
-  glowColor?: string; // e.g. "rgba(99, 102, 241, 0.4)"
+  glowColor?: string; // e.g. "rgba(78, 154, 62, 0.4)"
 }
 
 export default function TiltCard({
@@ -15,7 +15,7 @@ export default function TiltCard({
   className = "",
   onClick,
   active = false,
-  glowColor = "rgba(99, 102, 241, 0.3)",
+  glowColor = "rgba(78, 154, 62, 0.3)",
 }: TiltCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState("perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)");
