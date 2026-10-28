@@ -37,14 +37,14 @@ const FRAMEWORK_META: Record<
     ],
     smallTalkTip:
       "Use STAR to answer 'Tell me about yourself' or 'What did you work on?' — it keeps your story tight and memorable.",
-    accentBg: "bg-indigo-500/15",
-    accentText: "text-indigo-700",
-    accentBorder: "border-indigo-500/40",
-    stepBg: "bg-indigo-600/30",
-    stepText: "text-indigo-800",
-    badgeBg: "bg-indigo-500/25",
-    gradient: "from-indigo-600 via-indigo-500 to-cyan-500",
-    glow: "rgba(99, 102, 241, 0.4)",
+    accentBg: "bg-moss-light/15",
+    accentText: "text-moss-deep",
+    accentBorder: "border-moss-light/40",
+    stepBg: "bg-moss/30",
+    stepText: "text-moss-deep",
+    badgeBg: "bg-moss-light/25",
+    gradient: "from-moss via-moss-light to-tealbird",
+    glow: "rgba(78, 154, 62, 0.4)",
   },
   CAR: {
     emoji: "☕",
@@ -56,13 +56,13 @@ const FRAMEWORK_META: Record<
     ],
     smallTalkTip:
       "CAR makes small talk effortless — instead of saying 'It was good,' give context, an action, and a takeaway. People remember you.",
-    accentBg: "bg-emerald-500/15",
-    accentText: "text-emerald-700",
-    accentBorder: "border-emerald-500/40",
-    stepBg: "bg-emerald-600/30",
-    stepText: "text-emerald-800",
-    badgeBg: "bg-emerald-500/25",
-    gradient: "from-emerald-600 via-emerald-500 to-teal-400",
+    accentBg: "bg-moss-light/15",
+    accentText: "text-moss",
+    accentBorder: "border-moss-light/40",
+    stepBg: "bg-moss-light/30",
+    stepText: "text-moss-deep",
+    badgeBg: "bg-moss-light/25",
+    gradient: "from-moss-light via-moss-light to-tealbird-light",
     glow: "rgba(52, 211, 153, 0.4)",
   },
   SEE: {
@@ -94,13 +94,13 @@ const FRAMEWORK_META: Record<
     ],
     smallTalkTip:
       "PAR is perfect for 'What's been hard lately?' conversations — it shows depth and self-awareness that builds real connection.",
-    accentBg: "bg-purple-500/15",
-    accentText: "text-purple-700",
-    accentBorder: "border-purple-500/40",
-    stepBg: "bg-purple-600/30",
-    stepText: "text-purple-800",
-    badgeBg: "bg-purple-500/25",
-    gradient: "from-purple-600 via-purple-500 to-pink-500",
+    accentBg: "bg-tealbird/15",
+    accentText: "text-tealbird-deep",
+    accentBorder: "border-tealbird/40",
+    stepBg: "bg-tealbird/30",
+    stepText: "text-tealbird-deep",
+    badgeBg: "bg-tealbird/25",
+    gradient: "from-tealbird via-tealbird to-pink-500",
     glow: "rgba(192, 132, 252, 0.4)",
   },
 };
@@ -123,10 +123,10 @@ function FrameworkSlide({
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       {/* Counter */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-mono font-bold text-slate-600">
+        <span className="text-xs font-mono font-bold text-stone-muted">
           Framework {slideIndex + 1} of {total}
         </span>
-        <span className={`text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border ${meta.accentBg} ${meta.accentText} ${meta.accentBorder} shadow-md`}>
+        <span className={`text-[10px] font-semibold uppercase tracking-widest px-3.5 py-1 rounded-full border ${meta.accentBg} ${meta.accentText} ${meta.accentBorder} shadow-md`}>
           {fw} Method
         </span>
       </div>
@@ -144,20 +144,20 @@ function FrameworkSlide({
               {meta.emoji}
             </div>
             <div className="translate-z-20">
-              <h2 className={`text-2xl sm:text-3xl font-black ${meta.accentText} font-jakarta leading-tight`}>
+              <h2 className={`text-2xl sm:text-3xl font-semibold ${meta.accentText} leading-tight`}>
                 {def.name}
               </h2>
-              <p className="text-sm font-medium text-slate-800 mt-1">{meta.tagline}</p>
+              <p className="text-sm font-medium text-ink mt-1">{meta.tagline}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-3">
+            <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest mb-3">
               Best Used For
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {meta.useCases.map((uc, i) => (
-                <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
+                <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl bg-cream/60 border border-line text-xs font-medium text-ink">
                   <span className={`w-2 h-2 rounded-full ${meta.accentBg} border ${meta.accentBorder} shrink-0`} />
                   {uc}
                 </div>
@@ -167,7 +167,7 @@ function FrameworkSlide({
 
           {/* Steps */}
           <div>
-            <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-3">
+            <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest mb-3">
               The {fw} Steps Breakdown
             </p>
             <div className="grid grid-cols-1 gap-3">
@@ -177,13 +177,13 @@ function FrameworkSlide({
                   className={`flex items-start gap-3.5 rounded-2xl p-4 border ${meta.accentBorder} ${meta.accentBg} backdrop-blur-md`}
                 >
                   <span
-                    className={`w-10 h-10 shrink-0 rounded-xl ${meta.stepBg} ${meta.stepText} font-black text-lg flex items-center justify-center border ${meta.accentBorder} shadow-lg font-jakarta`}
+                    className={`w-10 h-10 shrink-0 rounded-xl ${meta.stepBg} ${meta.stepText} font-semibold text-lg flex items-center justify-center border ${meta.accentBorder} shadow-lg`}
                   >
                     {step.letter}
                   </span>
                   <div>
-                    <p className={`text-xs font-black ${meta.accentText} uppercase tracking-wider font-jakarta`}>{step.label}</p>
-                    <p className="text-xs text-slate-800 leading-relaxed mt-0.5 font-medium">{step.description}</p>
+                    <p className={`text-xs font-semibold ${meta.accentText} uppercase tracking-wider`}>{step.label}</p>
+                    <p className="text-xs text-ink leading-relaxed mt-0.5 font-medium">{step.description}</p>
                   </div>
                 </div>
               ))}
@@ -191,63 +191,63 @@ function FrameworkSlide({
           </div>
 
           {/* Small Talk Tip */}
-          <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-inner">
+          <div className="flex items-start gap-3 bg-cream/60 border border-line rounded-2xl p-4 shadow-inner">
             <span className="text-2xl shrink-0">🗣️</span>
             <div>
-              <p className="text-[11px] font-black text-slate-700 uppercase tracking-wider mb-0.5 font-jakarta">
+              <p className="text-[11px] font-semibold text-ink/80 uppercase tracking-wider mb-0.5">
                 Communication Tip
               </p>
-              <p className="text-xs text-slate-800 leading-relaxed">{meta.smallTalkTip}</p>
+              <p className="text-xs text-ink leading-relaxed">{meta.smallTalkTip}</p>
             </div>
           </div>
         </div>
       </TiltCard>
 
       {/* Example Box */}
-      <div className="glass-card rounded-2xl border border-slate-300 overflow-hidden shadow-2xl">
+      <div className="glass-card rounded-2xl border border-stone-soft/40 overflow-hidden shadow-2xl">
         <button
           type="button"
           onClick={() => setExampleOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-6 py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+          className="w-full flex items-center justify-between px-6 py-4 bg-cream/60 hover:bg-cream transition-colors"
         >
           <div className="flex items-center gap-2.5">
             <span className="text-lg">📖</span>
-            <span className="text-xs font-black text-slate-900 font-jakarta">
+            <span className="text-xs font-semibold text-ink">
               Annotated Sentence Breakdown: &ldquo;{detail.promptText.slice(0, 48)}...&rdquo;
             </span>
           </div>
-          <span className={`text-[11px] font-black uppercase tracking-wider ${meta.accentText}`}>
+          <span className={`text-[11px] font-semibold uppercase tracking-wider ${meta.accentText}`}>
             {exampleOpen ? "▲ Hide Breakdown" : "▼ View Breakdown"}
           </span>
         </button>
 
         {exampleOpen && (
-          <div className="px-6 py-5 space-y-4 border-t border-slate-200 bg-slate-50 animate-in fade-in duration-300">
+          <div className="px-6 py-5 space-y-4 border-t border-line bg-cream/60 animate-in fade-in duration-300">
             <div>
-              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">
+              <p className="text-[10px] font-semibold text-stone-muted uppercase tracking-widest mb-1">
                 Prompt
               </p>
-              <p className="text-xs font-semibold text-slate-900 italic">&ldquo;{detail.promptText}&rdquo;</p>
+              <p className="text-xs font-semibold text-ink italic">&ldquo;{detail.promptText}&rdquo;</p>
             </div>
 
             <div>
-              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2.5">
+              <p className="text-[10px] font-semibold text-stone-muted uppercase tracking-widest mb-2.5">
                 Sentence-by-Sentence Step Mapping
               </p>
               <div className="space-y-3">
                 {detail.exampleSentences && detail.exampleSentences.length > 0
                   ? detail.exampleSentences.map((sent, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+                      <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-cream border border-line">
                         <span
                           className={`shrink-0 w-7 h-7 rounded-lg ${meta.stepBg} ${meta.stepText} border ${meta.accentBorder} text-xs font-bold flex items-center justify-center`}
                         >
                           {sent.stepLetter}
                         </span>
-                        <p className="text-xs text-slate-900 leading-relaxed font-medium">{sent.text}</p>
+                        <p className="text-xs text-ink leading-relaxed font-medium">{sent.text}</p>
                       </div>
                     ))
                   : (
-                      <p className="text-xs text-slate-700 italic leading-relaxed">{detail.exampleAnswer}</p>
+                      <p className="text-xs text-ink/80 italic leading-relaxed">{detail.exampleAnswer}</p>
                     )}
               </div>
             </div>
@@ -264,13 +264,13 @@ function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div className="text-center space-y-3 py-2">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-700 uppercase tracking-widest backdrop-blur-xl">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-moss-light/15 border border-moss-light/30 text-xs font-bold text-moss uppercase tracking-widest backdrop-blur-xl">
           🧠 Communication Masterclass
         </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 font-jakarta leading-tight">
+        <h1 className="font-serif font-normal text-4xl sm:text-5xl text-ink leading-tight">
           Speak With Structure & Confidence
         </h1>
-        <p className="text-sm text-slate-700 max-w-lg mx-auto leading-relaxed">
+        <p className="text-sm text-ink/80 max-w-lg mx-auto leading-relaxed">
           Master 4 proven communication frameworks designed for behavioral interviews, technical explanations, and natural small talk.
         </p>
       </div>
@@ -281,16 +281,16 @@ function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
           { icon: "✍️", label: "Annotated Examples", sub: "Sentence-level mappings" },
           { icon: "🎙️", label: "3 Voice Prompts", sub: "Real-time AI evaluation" },
         ].map((item) => (
-          <div key={item.label} className="flex flex-col items-center text-center gap-1.5 glass-card p-5 rounded-2xl border border-slate-200 shadow-xl">
+          <div key={item.label} className="flex flex-col items-center text-center gap-1.5 glass-card p-5 rounded-2xl border border-line shadow-xl">
             <span className="text-3xl">{item.icon}</span>
-            <p className="text-sm font-bold text-slate-900 font-jakarta">{item.label}</p>
-            <p className="text-xs text-slate-600 leading-snug">{item.sub}</p>
+            <p className="text-sm font-bold text-ink">{item.label}</p>
+            <p className="text-xs text-stone-muted leading-snug">{item.sub}</p>
           </div>
         ))}
       </div>
 
       <div className="space-y-3">
-        <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest">
+        <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest">
           Framework Overview
         </p>
         <div className="space-y-3">
@@ -307,14 +307,14 @@ function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
                   <span className="text-3xl">{meta.emoji}</span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-base font-black ${meta.accentText} font-jakarta`}>{fw}</span>
-                      <span className="text-xs text-slate-800 truncate">— {def.name}</span>
+                      <span className={`text-base font-semibold ${meta.accentText}`}>{fw}</span>
+                      <span className="text-xs text-ink truncate">— {def.name}</span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-0.5">{meta.tagline}</p>
+                    <p className="text-xs text-stone-muted mt-0.5">{meta.tagline}</p>
                   </div>
                 </div>
                 {isInSession && (
-                  <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${meta.badgeBg} ${meta.accentText} border ${meta.accentBorder} shrink-0`}>
+                  <span className={`text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full ${meta.badgeBg} ${meta.accentText} border ${meta.accentBorder} shrink-0`}>
                     In Session
                   </span>
                 )}
@@ -352,8 +352,8 @@ export default function FrameworkIntroScreen({
             onClick={() => setSlideIndex(i)}
             className={`transition-all duration-300 rounded-full ${
               i === slideIndex
-                ? "w-10 h-3 bg-gradient-to-r from-emerald-500 to-teal-400 shadow-md shadow-emerald-500/40"
-                : "w-3 h-3 bg-slate-200 hover:bg-slate-300"
+                ? "w-10 h-3 bg-gradient-to-r from-moss-light to-tealbird-light shadow-md shadow-moss-light/40"
+                : "w-3 h-3 bg-line hover:bg-line"
             }`}
           />
         ))}
@@ -376,7 +376,7 @@ export default function FrameworkIntroScreen({
           <button
             type="button"
             onClick={goPrev}
-            className="flex items-center gap-2 px-6 py-4 rounded-2xl glass-card hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
+            className="flex items-center gap-2 px-6 py-4 rounded-2xl glass-card hover:bg-line text-ink text-xs font-bold transition-all"
           >
             ← Previous
           </button>
@@ -386,7 +386,7 @@ export default function FrameworkIntroScreen({
           <button
             type="button"
             onClick={onStartPractice}
-            className="flex-1 py-4.5 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm tracking-wide transition-all shadow-2xl shadow-emerald-500/40 flex items-center justify-center gap-2 font-jakarta"
+            className="flex-1 py-4 px-8 rounded-2xl bg-moss hover:bg-moss-deep text-cream font-semibold text-sm transition-all shadow-[0_3px_0_#1C3B16] active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2"
           >
             <span>Start Communication Voice Practice</span>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -397,7 +397,7 @@ export default function FrameworkIntroScreen({
           <button
             type="button"
             onClick={goNext}
-            className="flex-1 py-4.5 px-8 rounded-2xl bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-300 text-slate-900 font-extrabold text-xs tracking-wide transition-all flex items-center justify-center gap-2 font-jakarta"
+            className="flex-1 py-4 px-8 rounded-2xl bg-moss hover:bg-moss-deep text-cream font-semibold text-sm transition-all shadow-[0_3px_0_#1C3B16] active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2"
           >
             <span>{slideIndex === 0 ? "Learn Frameworks" : "Next Framework"}</span>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

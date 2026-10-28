@@ -65,13 +65,21 @@ export default function SiteNav() {
   if (pathname?.startsWith("/interview/")) return null;
 
   return (
-    <header className="sticky top-5 z-50 px-4 w-full max-w-4xl mx-auto">
-      <div className="cloudkit-nav rounded-full pl-5 pr-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2 transition-all duration-300">
+    <header className="sticky top-4 z-50 px-4 w-full max-w-6xl mx-auto">
+      <div className="rounded-2xl bg-paper/85 backdrop-blur-xl border border-line pl-4 pr-2 sm:pl-5 py-2 flex items-center justify-between gap-2 transition-all duration-300">
         
         {/* Brand / Logo (Left) */}
         <Link href="/" className="flex items-center gap-2 group">
-          <span className="text-xl group-hover:scale-110 transition-transform">🦜</span>
-          <span className="text-lg font-bold tracking-tight text-slate-900 font-jakarta">
+          <span className="w-8 h-8 rounded-full bg-moss flex items-center justify-center group-hover:rotate-[-8deg] transition-transform">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+              <polygon points="15,4 8,7 6,13 11,12" fill="#B4E585" />
+              <polygon points="15,4 11,12 17,15 19,9" fill="#5CB34C" />
+              <polygon points="6,13 11,12 17,15 10,20" fill="#3E9443" />
+              <polygon points="8,7 3,9 4,14 6,13" fill="#FF7A57" />
+              <circle cx="11" cy="8.5" r="1.3" fill="#17221A" />
+            </svg>
+          </span>
+          <span className="text-lg font-semibold tracking-tight text-ink">
             Parrot
           </span>
         </Link>
@@ -82,8 +90,8 @@ export default function SiteNav() {
             href="/"
             className={`text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
               pathname === "/"
-                ? "text-slate-900 font-semibold"
-                : "text-slate-600 hover:text-slate-900"
+                ? "text-ink bg-cream"
+                : "text-stone-muted hover:text-ink"
             }`}
           >
             Home
@@ -93,8 +101,8 @@ export default function SiteNav() {
             href="/creators"
             className={`text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
               pathname === "/creators"
-                ? "text-slate-900 font-semibold"
-                : "text-slate-600 hover:text-slate-900"
+                ? "text-ink bg-cream"
+                : "text-stone-muted hover:text-ink"
             }`}
           >
             Creator
@@ -104,13 +112,13 @@ export default function SiteNav() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-1 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center gap-1 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full text-stone-muted hover:text-ink transition-colors"
               aria-expanded={dropdownOpen}
             >
               <span>Other Tracks</span>
               <svg
                 className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                  dropdownOpen ? "rotate-180 text-slate-900" : "text-slate-500"
+                  dropdownOpen ? "rotate-180 text-ink" : "text-stone-soft"
                 }`}
                 fill="none"
                 viewBox="0 0 24 24"
@@ -122,7 +130,7 @@ export default function SiteNav() {
 
             {/* Dropdown Menu (Only IELTS Speaking and Communication Builder) */}
             {dropdownOpen && (
-              <div className="absolute right-0 mt-3 w-64 rounded-2xl p-2 bg-white/95 backdrop-blur-2xl border border-slate-200/80 shadow-2xl shadow-slate-900/15 z-50 animate-speech-pop">
+              <div className="absolute right-0 mt-3 w-64 rounded-2xl p-2 bg-paper border border-line shadow-[0_20px_40px_-20px_rgba(23,34,26,0.35)] z-50 animate-speech-pop">
                 <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">
                   Select Practice Module
                 </div>
@@ -132,12 +140,12 @@ export default function SiteNav() {
                   <button
                     onClick={() => handleLaunchTrack("ielts-speaking")}
                     disabled={loadingTrack !== null}
-                    className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 group transition-all flex items-start gap-2.5"
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-cream group transition-all flex items-start gap-2.5"
                   >
-                    <span className="text-base">🎙️</span>
+                    <span className="mt-0.5 w-2 h-2 rounded-full bg-moss-light shrink-0" />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                        <span className="text-xs font-semibold text-slate-800 group-hover:text-moss transition-colors">
                           IELTS Speaking
                         </span>
                         {loadingTrack === "ielts-speaking" && (
@@ -154,12 +162,12 @@ export default function SiteNav() {
                   <button
                     onClick={() => handleLaunchTrack("communication-builder")}
                     disabled={loadingTrack !== null}
-                    className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 group transition-all flex items-start gap-2.5"
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-cream group transition-all flex items-start gap-2.5"
                   >
-                    <span className="text-base">💬</span>
+                    <span className="mt-0.5 w-2 h-2 rounded-full bg-beak shrink-0" />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                        <span className="text-xs font-semibold text-slate-800 group-hover:text-moss transition-colors">
                           Communication Builder
                         </span>
                         {loadingTrack === "communication-builder" && (
@@ -181,13 +189,13 @@ export default function SiteNav() {
         <div className="flex items-center gap-1">
           <Link
             href="/mock-interview"
-            className="text-sm font-semibold px-5 py-2.5 sm:py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-md shadow-slate-900/10 transition-all duration-200 active:scale-95 whitespace-nowrap"
+            className="text-sm font-semibold px-5 py-2.5 rounded-xl bg-moss hover:bg-moss-deep text-cream transition-all duration-200 active:scale-95 whitespace-nowrap"
           >
             Try free
           </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="sm:hidden w-11 h-11 flex items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 transition-colors"
+            className="sm:hidden w-11 h-11 flex items-center justify-center rounded-full text-ink hover:bg-cream transition-colors"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
           >
@@ -204,19 +212,19 @@ export default function SiteNav() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="sm:hidden mt-2 rounded-3xl p-2 bg-white/95 backdrop-blur-2xl border border-slate-200/80 shadow-2xl shadow-slate-900/15 animate-speech-pop">
+        <div className="sm:hidden mt-2 rounded-3xl p-2 bg-paper border border-line shadow-[0_20px_40px_-20px_rgba(23,34,26,0.35)] animate-speech-pop">
           <Link
             href="/"
-            className={`block px-4 py-3 rounded-2xl text-sm font-medium hover:bg-slate-50 ${
-              pathname === "/" ? "text-slate-900 font-semibold" : "text-slate-600"
+            className={`block px-4 py-3 rounded-2xl text-sm font-medium hover:bg-cream ${
+              pathname === "/" ? "text-ink font-semibold" : "text-stone-muted"
             }`}
           >
             Home
           </Link>
           <Link
             href="/creators"
-            className={`block px-4 py-3 rounded-2xl text-sm font-medium hover:bg-slate-50 ${
-              pathname === "/creators" ? "text-slate-900 font-semibold" : "text-slate-600"
+            className={`block px-4 py-3 rounded-2xl text-sm font-medium hover:bg-cream ${
+              pathname === "/creators" ? "text-ink font-semibold" : "text-stone-muted"
             }`}
           >
             Creator
@@ -227,9 +235,9 @@ export default function SiteNav() {
           <button
             onClick={() => handleLaunchTrack("ielts-speaking")}
             disabled={loadingTrack !== null}
-            className="w-full text-left px-4 py-3 rounded-2xl hover:bg-slate-50 flex items-center gap-2.5"
+            className="w-full text-left px-4 py-3 rounded-2xl hover:bg-cream flex items-center gap-2.5"
           >
-            <span className="text-base">🎙️</span>
+            <span className="mt-0.5 w-2 h-2 rounded-full bg-moss-light shrink-0" />
             <span className="text-sm font-medium text-slate-800">IELTS Speaking</span>
             {loadingTrack === "ielts-speaking" && (
               <span className="text-[11px] text-blue-500 animate-pulse font-mono">Launching...</span>
@@ -238,9 +246,9 @@ export default function SiteNav() {
           <button
             onClick={() => handleLaunchTrack("communication-builder")}
             disabled={loadingTrack !== null}
-            className="w-full text-left px-4 py-3 rounded-2xl hover:bg-slate-50 flex items-center gap-2.5"
+            className="w-full text-left px-4 py-3 rounded-2xl hover:bg-cream flex items-center gap-2.5"
           >
-            <span className="text-base">💬</span>
+            <span className="mt-0.5 w-2 h-2 rounded-full bg-beak shrink-0" />
             <span className="text-sm font-medium text-slate-800">Communication Builder</span>
             {loadingTrack === "communication-builder" && (
               <span className="text-[11px] text-blue-500 animate-pulse font-mono">Launching...</span>

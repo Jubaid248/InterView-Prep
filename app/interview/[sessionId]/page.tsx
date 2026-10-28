@@ -496,14 +496,14 @@ export default function InterviewPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="flex flex-col items-center gap-4 glass-card p-8 rounded-3xl border border-slate-200 shadow-2xl">
-          <svg className="animate-spin h-10 w-10 text-emerald-600" viewBox="0 0 24 24" fill="none">
+        <div className="flex flex-col items-center gap-4 glass-card p-8 rounded-3xl border border-line shadow-2xl">
+          <svg className="animate-spin h-10 w-10 text-moss" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
           <div className="text-center">
-            <p className="text-slate-900 text-base font-bold font-jakarta">Preparing Parrot Studio...</p>
-            <p className="text-slate-600 text-xs font-mono mt-1">Configuring AI session</p>
+            <p className="text-ink text-base font-bold">Preparing your studio…</p>
+            <p className="text-stone-muted text-xs font-mono mt-1">Configuring AI session</p>
           </div>
         </div>
       </div>
@@ -514,14 +514,14 @@ export default function InterviewPage() {
   if (error) {
     return (
       <div className="max-w-lg mx-auto mt-16 px-4">
-        <div className="glass-card border border-red-500/30 rounded-3xl p-8 text-center space-y-4 shadow-2xl">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-600 flex items-center justify-center mx-auto text-xl">
+        <div className="glass-card border border-beak/30 rounded-3xl p-8 text-center space-y-4 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-beak/20 text-beak flex items-center justify-center mx-auto text-xl">
             ⚠️
           </div>
-          <p className="text-red-600 font-medium text-sm">{error}</p>
+          <p className="text-beak font-medium text-sm">{error}</p>
           <button
             onClick={() => router.push("/")}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 underline font-mono"
+            className="text-xs font-bold text-moss hover:text-moss-deep underline font-mono"
           >
             ← Return to Home
           </button>
@@ -603,21 +603,21 @@ export default function InterviewPage() {
   if (sessionStage === "report" || state.isComplete) {
     return (
       <div className="max-w-3xl mx-auto py-12 px-4">
-        <div className="glass-card rounded-3xl p-8 sm:p-12 text-center space-y-6 border border-slate-200 shadow-2xl">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-            <svg className="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <div className="glass-card rounded-3xl p-8 sm:p-12 text-center space-y-6 border border-line shadow-2xl">
+          <div className="w-20 h-20 rounded-full bg-moss-light/20 border border-moss-light/40 flex items-center justify-center mx-auto shadow-lg shadow-moss-light/20">
+            <svg className="w-10 h-10 text-moss" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
 
           <div className="space-y-2">
-            <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-600 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-moss font-bold bg-moss-light/10 px-3 py-1 rounded-full border border-moss-light/20">
               {interviewMode === "serious" ? "Serious Proctored Session Completed" : "Practice Session Completed"}
             </span>
-            <h2 className="text-3xl font-black text-slate-900 font-jakarta">
+            <h2 className="font-serif font-normal text-4xl text-ink">
               {isIeltsSpeaking ? "IELTS Exam Practice Complete!" : "Session Completed with Parrot!"}
             </h2>
-            <p className="text-slate-600 text-sm max-w-md mx-auto">
+            <p className="text-stone-muted text-sm max-w-md mx-auto">
               {isIeltsSpeaking
                 ? "All 3 parts recorded. Generate your comprehensive report to view your estimated Band Scores across 4 criteria."
                 : "All interview prompts completed. Generate your report for transcript analysis, filler words, grammar, and STAR feedback."}
@@ -626,32 +626,32 @@ export default function InterviewPage() {
 
           {/* Mode & Proctor Summary */}
           <div className="flex items-center justify-center gap-4 py-2 flex-wrap">
-            <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono">
-              <span className="text-slate-600">Mode: </span>
-              <span className={`font-bold ${interviewMode === "serious" ? "text-red-600" : "text-emerald-600"}`}>
+            <div className="px-4 py-2 rounded-2xl bg-cream/60 border border-line text-xs font-mono">
+              <span className="text-stone-muted">Mode: </span>
+              <span className={`font-bold ${interviewMode === "serious" ? "text-beak" : "text-moss"}`}>
                 {interviewMode === "serious" ? "⚔️ Serious Proctored" : "🎯 Practice Mode"}
               </span>
             </div>
             {interviewMode === "serious" && (
-              <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono">
-                <span className="text-slate-600">Proctor Violations: </span>
-                <span className={`font-bold ${proctor.totalViolations === 0 ? "text-emerald-600" : "text-amber-600"}`}>
+              <div className="px-4 py-2 rounded-2xl bg-cream/60 border border-line text-xs font-mono">
+                <span className="text-stone-muted">Proctor Violations: </span>
+                <span className={`font-bold ${proctor.totalViolations === 0 ? "text-moss" : "text-amber-600"}`}>
                   {proctor.totalViolations}
                 </span>
               </div>
             )}
-            <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono">
-              <span className="text-slate-600">AI Interviewer: </span>
-              <span className="text-indigo-600 font-bold">Parrot v2.4</span>
+            <div className="px-4 py-2 rounded-2xl bg-cream/60 border border-line text-xs font-mono">
+              <span className="text-stone-muted">AI Interviewer: </span>
+              <span className="text-moss font-bold">Parrot v2.4</span>
             </div>
           </div>
 
           {state.lastTranscript && (
-            <div className="text-left bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+            <div className="text-left bg-cream/60 border border-line rounded-2xl p-4 space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-stone-soft">
                 Last Recorded Response
               </p>
-              <p className="text-xs text-slate-700 leading-relaxed">&ldquo;{state.lastTranscript}&rdquo;</p>
+              <p className="text-xs text-ink/80 leading-relaxed">&ldquo;{state.lastTranscript}&rdquo;</p>
             </div>
           )}
 
@@ -659,11 +659,11 @@ export default function InterviewPage() {
             id="generate-report-btn"
             onClick={handleGenerateReport}
             disabled={generatingReport}
-            className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:from-slate-100 disabled:to-slate-50 text-white font-extrabold text-sm tracking-wide transition-all shadow-xl shadow-emerald-500/30 hover:scale-105"
+            className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-moss hover:bg-moss-deep disabled:from-cream disabled:to-cream text-white font-semibold text-sm tracking-wide transition-all shadow-xl shadow-moss-light/30 hover:scale-105"
           >
             {generatingReport ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-slate-900" viewBox="0 0 24 24" fill="none">
+                <svg className="animate-spin h-5 w-5 text-ink" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
@@ -695,10 +695,10 @@ export default function InterviewPage() {
 
   // Common Question Card component shared across both views
   const QuestionCardContent = (
-    <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-5 border border-slate-300 shadow-2xl relative overflow-hidden">
+    <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-5 border border-stone-soft/40 shadow-2xl relative overflow-hidden">
       <div
         className={`absolute top-0 left-0 right-0 h-1.5 ${
-          state.isFollowUp ? "bg-amber-400" : isIeltsSpeaking ? "bg-purple-500" : "bg-emerald-500"
+          state.isFollowUp ? "bg-amber-400" : isIeltsSpeaking ? "bg-tealbird" : "bg-moss-light"
         }`}
       />
 
@@ -706,10 +706,10 @@ export default function InterviewPage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span
-            className={`text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border ${
+            className={`text-[10px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${
               state.isFollowUp
                 ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
-                : "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"
+                : "bg-moss-light/15 text-moss border-moss-light/30"
             }`}
           >
             {state.isFollowUp
@@ -720,7 +720,7 @@ export default function InterviewPage() {
           </span>
 
           {isIeltsPart2 && (
-            <span className="text-[10px] font-mono text-purple-700 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+            <span className="text-[10px] font-mono text-tealbird-deep bg-tealbird/10 px-2 py-0.5 rounded border border-tealbird/20">
               Cue Card (1–2 min)
             </span>
           )}
@@ -737,23 +737,23 @@ export default function InterviewPage() {
 
       {/* Main Question Text */}
       <div className="space-y-3">
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-relaxed font-jakarta">
+        <h2 className="font-serif font-normal text-2xl sm:text-2xl text-ink leading-relaxed">
           {isIeltsPart2 ? state.currentQuestion.split("\n")[0] : state.currentQuestion}
         </h2>
 
         {/* IELTS Part 2 Bullet Points */}
         {isIeltsPart2 && ieltsPart2Bullets.length > 0 && (
-          <div className="space-y-2 pt-3 border-t border-purple-500/20">
-            <p className="text-[11px] font-black text-purple-700 uppercase tracking-widest">
+          <div className="space-y-2 pt-3 border-t border-tealbird/20">
+            <p className="text-[11px] font-semibold text-tealbird-deep uppercase tracking-widest">
               You should say:
             </p>
             <div className="grid grid-cols-1 gap-2">
               {ieltsPart2Bullets.map((bp: string, i: number) => (
                 <div
                   key={i}
-                  className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800"
+                  className="flex items-start gap-2.5 p-2.5 rounded-xl bg-cream/60 border border-line text-xs text-ink"
                 >
-                  <span className="w-5 h-5 rounded bg-purple-500/20 text-purple-700 text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded bg-tealbird/20 text-tealbird-deep text-[10px] font-bold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   <span className="leading-snug">{bp}</span>
@@ -768,16 +768,16 @@ export default function InterviewPage() {
       {isCommBuilder && currentQuestionDetail && !state.isFollowUp && (() => {
         const fw = currentQuestionDetail.framework;
         const colorMap: Record<string, { bg: string; text: string; border: string; stepBg: string }> = {
-          STAR: { bg: "bg-indigo-500/10", text: "text-indigo-700", border: "border-indigo-500/30", stepBg: "bg-indigo-600/30" },
-          CAR: { bg: "bg-emerald-500/10", text: "text-emerald-700", border: "border-emerald-500/30", stepBg: "bg-emerald-600/30" },
+          STAR: { bg: "bg-moss-light/10", text: "text-moss-deep", border: "border-moss-light/30", stepBg: "bg-moss/30" },
+          CAR: { bg: "bg-moss-light/10", text: "text-moss", border: "border-moss-light/30", stepBg: "bg-moss-light/30" },
           SEE: { bg: "bg-amber-500/10", text: "text-amber-700", border: "border-amber-500/30", stepBg: "bg-amber-600/30" },
-          PAR: { bg: "bg-purple-500/10", text: "text-purple-700", border: "border-purple-500/30", stepBg: "bg-purple-600/30" },
+          PAR: { bg: "bg-tealbird/10", text: "text-tealbird-deep", border: "border-tealbird/30", stepBg: "bg-tealbird/30" },
         };
         const c = (fw && colorMap[fw]) || colorMap.STAR;
         return (
           <div className={`rounded-2xl border ${c.border} ${c.bg} p-3.5 space-y-2`}>
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-black uppercase tracking-wider ${c.text}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${c.text}`}>
                 💡 Structure with {fw} Framework
               </span>
             </div>
@@ -785,12 +785,12 @@ export default function InterviewPage() {
               {currentQuestionDetail.frameworkSteps?.map((step: FrameworkStepItem) => (
                 <div
                   key={step.letter}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cream/60 border border-line"
                 >
                   <span className={`w-4 h-4 rounded ${c.stepBg} ${c.text} text-[10px] font-bold flex items-center justify-center`}>
                     {step.letter}
                   </span>
-                  <span className="text-[11px] text-slate-700 font-medium">
+                  <span className="text-[11px] text-ink/80 font-medium">
                     {step.label}
                   </span>
                 </div>
@@ -804,20 +804,20 @@ export default function InterviewPage() {
 
   // Common Recorder Hub component (Preserves AudioRecorder mount to prevent unmount ghost audio)
   const RecorderHubContent = (
-    <div className="glass-card rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-2xl">
+    <div className="glass-card rounded-3xl p-5 sm:p-7 border border-line shadow-2xl">
       {state.isProcessing && (
         <div className="flex flex-col items-center justify-center py-8 space-y-4">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin" />
-            <span className="absolute inset-0 flex items-center justify-center text-xl">
-              🦜
+            <div className="w-16 h-16 rounded-full border-4 border-moss-light/20 border-t-moss-light animate-spin" />
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-moss">
+              T
             </span>
           </div>
           <div className="text-center space-y-1">
-            <h3 className="text-sm font-bold text-slate-900 font-jakarta">
+            <h3 className="text-sm font-bold text-ink">
               Parrot is evaluating your response...
             </h3>
-            <p className="text-xs text-slate-600 font-mono">
+            <p className="text-xs text-stone-muted font-mono">
               Analyzing grammar, speech metrics & criteria
             </p>
           </div>
@@ -826,11 +826,11 @@ export default function InterviewPage() {
 
       <div className={state.isProcessing ? "hidden" : "space-y-4"}>
         <div className="flex items-center justify-between px-1">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-stone-muted font-bold">
             {isSerious ? "Hands-Free Conversation Mode" : "Candidate Response Console (Tap-to-Record)"}
           </span>
           {isSpeaking && (
-            <span className="text-[10px] font-mono text-emerald-600 animate-pulse">
+            <span className="text-[10px] font-mono text-moss animate-pulse">
               Parrot is speaking — please listen
             </span>
           )}
@@ -858,26 +858,32 @@ export default function InterviewPage() {
   // ─────────────────────────────────────────────────────────────
   if (!isSerious) {
     return (
-      <div className="min-h-screen text-slate-900 py-6 px-4">
+      <div className="min-h-screen text-ink py-6 px-4">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Top Practice Navigation Bar */}
-          <header className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-slate-200">
+          <header className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-line">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
                   stop();
                   router.push("/");
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-slate-600 hover:text-slate-900 transition-colors bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl hover:bg-slate-100"
+                className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-stone-muted hover:text-ink transition-colors bg-cream border border-line px-3.5 py-2 rounded-xl hover:bg-cream"
               >
                 ← Exit Practice
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-xl">🦜</span>
-                <span className="text-xs font-bold font-jakarta text-slate-900 uppercase tracking-wider">
-                  Parrot Studio
+                <span className="w-7 h-7 rounded-full bg-moss flex items-center justify-center" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4">
+                    <polygon points="15,4 8,7 6,13 11,12" fill="#B4E585" />
+                    <polygon points="15,4 11,12 17,15 19,9" fill="#5CB34C" />
+                    <polygon points="6,13 11,12 17,15 10,20" fill="#3E9443" />
+                    <polygon points="8,7 3,9 4,14 6,13" fill="#FF7A57" />
+                    <circle cx="11" cy="8.5" r="1.3" fill="#17221A" />
+                  </svg>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 font-mono font-bold border border-emerald-500/30">
+                <span className="text-sm font-semibold text-ink">Parrot studio</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-moss-light/15 text-moss font-mono font-bold border border-moss-light/30">
                   🎯 Practice Mode
                 </span>
               </div>
@@ -889,16 +895,16 @@ export default function InterviewPage() {
               {cameraActive ? (
                 <button
                   onClick={handleDisableCamera}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-mono text-slate-700 hover:text-red-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream hover:bg-line border border-line text-xs font-mono text-ink/80 hover:text-beak transition-colors"
                   title="Turn off webcam"
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-moss-light animate-pulse" />
                   <span>Turn Camera Off</span>
                 </button>
               ) : (
                 <button
                   onClick={handleRequestCamera}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-xs font-mono text-indigo-700 hover:text-slate-900 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-cream border border-line text-xs font-mono text-ink transition-colors"
                   title="Turn on webcam for eye-contact analysis"
                 >
                   <span>📷</span>
@@ -908,7 +914,7 @@ export default function InterviewPage() {
 
               <button
                 onClick={() => setAudioEnabled(!audioEnabled)}
-                className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700 hover:text-slate-900 transition-colors"
+                className="p-2 rounded-xl bg-cream border border-line text-xs text-ink/80 hover:text-ink transition-colors"
                 title={audioEnabled ? "Mute voice" : "Unmute voice"}
               >
                 {audioEnabled ? "🔊 Voice: On" : "🔇 Voice: Muted"}
@@ -917,7 +923,7 @@ export default function InterviewPage() {
           </header>
 
           {/* Progress Indicator */}
-          <div className="flex items-center justify-between text-xs font-mono text-slate-600 px-1">
+          <div className="flex items-center justify-between text-xs font-mono text-stone-muted px-1">
             <span>
               Question {state.currentQuestionIndex + 1} of {state.totalQuestions}
             </span>
@@ -927,10 +933,10 @@ export default function InterviewPage() {
                   key={idx}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     idx < state.currentQuestionIndex
-                      ? "w-6 bg-emerald-400"
+                      ? "w-6 bg-moss-light"
                       : idx === state.currentQuestionIndex
-                      ? "w-8 bg-indigo-400"
-                      : "w-3 bg-slate-200"
+                      ? "w-8 bg-moss-light"
+                      : "w-3 bg-line"
                   }`}
                 />
               ))}
@@ -939,11 +945,11 @@ export default function InterviewPage() {
 
           {/* Previous Answer Transcript Note */}
           {state.lastTranscript && (
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1 animate-in fade-in duration-300">
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 flex items-center gap-1.5 font-mono">
+            <div className="bg-cream/60 border border-line rounded-2xl p-4 space-y-1 animate-in fade-in duration-300">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-stone-muted flex items-center gap-1.5 font-mono">
                 <span>📝</span> Previous Answer Transcript
               </p>
-              <p className="text-xs text-slate-700 leading-relaxed italic">
+              <p className="text-xs text-ink/80 leading-relaxed italic">
                 &ldquo;{state.lastTranscript}&rdquo;
               </p>
             </div>
@@ -989,7 +995,7 @@ export default function InterviewPage() {
   // MODE 2: SERIOUS INTERVIEW (Screen takeover, mandatory video, automatic hands-free conversation)
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-40 bg-[#eaf2fb] text-slate-900 flex flex-col overflow-hidden select-none">
+    <div className="fixed inset-0 z-40 bg-[#eaf2fb] text-ink flex flex-col overflow-hidden select-none">
       {/* 1. Fullscreen Violation Guard & Warning Overlay */}
       <FullscreenWarning
         showWarning={proctor.showWarning}
@@ -1049,11 +1055,11 @@ export default function InterviewPage() {
         <section className="lg:col-span-7 flex flex-col gap-4 h-full overflow-y-auto pl-1 justify-between">
           <div className="space-y-4">
             {state.lastTranscript && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1 animate-in fade-in duration-300">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 flex items-center gap-1.5 font-mono">
+              <div className="bg-cream/60 border border-line rounded-2xl p-3.5 space-y-1 animate-in fade-in duration-300">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-stone-muted flex items-center gap-1.5 font-mono">
                   <span>📝</span> Previous Answer Transcript
                 </p>
-                <p className="text-xs text-slate-700 leading-relaxed italic line-clamp-2">
+                <p className="text-xs text-ink/80 leading-relaxed italic line-clamp-2">
                   &ldquo;{state.lastTranscript}&rdquo;
                 </p>
               </div>

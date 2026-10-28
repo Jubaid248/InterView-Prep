@@ -46,21 +46,21 @@ export default function ProctoringBar({
 
   return (
     <>
-      <header className="w-full bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-2.5 backdrop-blur-xl flex items-center justify-between gap-4 z-40 select-none">
+      <header className="w-full bg-cream/60 border-b border-line px-4 sm:px-6 py-2.5 backdrop-blur-xl flex items-center justify-between gap-4 z-40 select-none">
         {/* Left: Parrot AI & Track Info */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🦜</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-moss-light" aria-hidden="true" />
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-black text-slate-900 tracking-wider font-jakarta uppercase">
+                <span className="text-xs font-semibold text-ink tracking-wider uppercase">
                   Parrot
                 </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-700 font-bold border border-indigo-500/30">
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-moss-light/20 text-moss-deep font-bold border border-moss-light/30">
                   PROCTORED
                 </span>
               </div>
-              <span className="text-[10px] text-slate-600 font-mono hidden sm:inline">
+              <span className="text-[10px] text-stone-muted font-mono hidden sm:inline">
                 {trackName ? trackName.replace("-", " ").toUpperCase() : "PROCTORED INTERVIEW"}
               </span>
             </div>
@@ -77,24 +77,24 @@ export default function ProctoringBar({
                   key={idx}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     idx < currentQuestionIndex
-                      ? "w-4 bg-emerald-400"
+                      ? "w-4 bg-moss-light"
                       : idx === currentQuestionIndex
-                      ? `w-6 ${isFollowUp ? "bg-amber-400 animate-pulse" : "bg-indigo-400"}`
-                      : "w-2 bg-slate-200"
+                      ? `w-6 ${isFollowUp ? "bg-amber-400 animate-pulse" : "bg-moss-light"}`
+                      : "w-2 bg-line"
                   }`}
                   title={`Question ${idx + 1}`}
                 />
               ))}
             </div>
-            <span className="text-xs font-mono font-bold text-slate-700 ml-1">
+            <span className="text-xs font-mono font-bold text-ink/80 ml-1">
               Q{currentQuestionIndex + 1}
-              <span className="text-slate-500">/{totalQuestions || 5}</span>
+              <span className="text-stone-soft">/{totalQuestions || 5}</span>
             </span>
           </div>
 
           {/* Session Duration Clock */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-mono text-slate-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cream border border-line text-xs font-mono text-ink">
+            <span className="w-1.5 h-1.5 rounded-full bg-moss-light animate-ping" />
             <span>{formatTimer(elapsedSeconds)}</span>
           </div>
         </div>
@@ -102,8 +102,8 @@ export default function ProctoringBar({
         {/* Right: Security & Proctor Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Live REC Indicator */}
-          <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-[10px] font-mono font-bold text-red-600">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-beak/10 border border-beak/30 text-[10px] font-mono font-bold text-beak">
+            <span className="w-2 h-2 rounded-full bg-beak animate-pulse" />
             <span className="hidden sm:inline">REC</span>
           </div>
 
@@ -111,10 +111,10 @@ export default function ProctoringBar({
           <div
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border transition-colors ${
               totalViolations === 0
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600"
+                ? "bg-moss-light/10 border-moss-light/30 text-moss"
                 : totalViolations < 3
                 ? "bg-amber-500/15 border-amber-500/40 text-amber-700 animate-bounce"
-                : "bg-red-500/20 border-red-500/50 text-red-700 animate-pulse"
+                : "bg-beak/20 border-beak/50 text-beak-deep animate-pulse"
             }`}
             title="Anti-cheating violation monitor"
           >
@@ -129,7 +129,7 @@ export default function ProctoringBar({
             onClick={onRequestFullscreen}
             className={`p-1.5 sm:px-2.5 sm:py-1 rounded-xl border text-xs font-mono font-medium transition-colors flex items-center gap-1.5 ${
               isFullscreen
-                ? "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900"
+                ? "bg-cream border-line text-stone-muted hover:text-ink"
                 : "bg-amber-500/20 border-amber-500/50 text-amber-700 animate-pulse hover:bg-amber-500/30"
             }`}
             title={isFullscreen ? "Fullscreen active" : "Enter Fullscreen"}
@@ -164,7 +164,7 @@ export default function ProctoringBar({
           {/* Voice Mute/Unmute */}
           <button
             onClick={() => onToggleAudio(!audioEnabled)}
-            className="p-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 transition-colors"
+            className="p-1.5 rounded-xl bg-cream border border-line text-ink/80 hover:text-ink transition-colors"
             title={audioEnabled ? "Mute Parrot voice" : "Unmute Parrot voice"}
           >
             {audioEnabled ? "🔊" : "🔇"}
@@ -173,7 +173,7 @@ export default function ProctoringBar({
           {/* Exit / Abort Button */}
           <button
             onClick={() => setShowExitConfirm(true)}
-            className="px-2.5 py-1 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-[11px] font-mono font-bold text-red-700 hover:text-red-800 transition-colors"
+            className="px-2.5 py-1 rounded-xl bg-beak/10 hover:bg-beak/20 border border-beak/30 text-[11px] font-mono font-bold text-beak-deep hover:text-beak-deep transition-colors"
           >
             Exit
           </button>
@@ -182,21 +182,21 @@ export default function ProctoringBar({
 
       {/* Confirmation Modal to Exit */}
       {showExitConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-          <div className="max-w-md w-full bg-slate-100 border border-red-500/40 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-red-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-md">
+          <div className="max-w-md w-full bg-cream border border-beak/40 rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-beak">
               <span className="text-2xl">⚠️</span>
-              <h4 className="text-base font-bold text-slate-900 font-jakarta">
+              <h4 className="text-base font-bold text-ink">
                 Leave Proctored Interview?
               </h4>
             </div>
-            <p className="text-xs text-slate-700 leading-relaxed">
+            <p className="text-xs text-ink/80 leading-relaxed">
               Exiting now will terminate your session and Parrot will not be able to evaluate remaining questions. Are you sure you want to exit?
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowExitConfirm(false)}
-                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-xs font-semibold text-slate-900 transition-colors"
+                className="px-4 py-2 rounded-xl bg-line hover:bg-line text-xs font-semibold text-ink transition-colors"
               >
                 Continue Interview
               </button>
@@ -205,7 +205,7 @@ export default function ProctoringBar({
                   setShowExitConfirm(false);
                   onExit();
                 }}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold text-white transition-colors"
+                className="px-4 py-2 rounded-xl bg-beak hover:bg-beak text-xs font-bold text-white transition-colors"
               >
                 Exit Session
               </button>
