@@ -29,7 +29,8 @@ async function dbConnect(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 1500, // Fast 1.5s timeout for local check
+      // Fast 1.5s check for a local Mongo; a hosted cluster (Atlas) can need longer on a cold start
+      serverSelectionTimeoutMS: process.env.MONGODB_URI ? 10000 : 1500,
     };
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => m);
   }

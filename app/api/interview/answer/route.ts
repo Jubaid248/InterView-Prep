@@ -40,6 +40,9 @@ function formatHistory(answers: any[]): string {
     .join("\n");
 }
 
+// AI calls can be slow; give Vercel functions up to 60s instead of the default
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const {

@@ -7,6 +7,9 @@ import {
 } from "@/lib/store";
 import { generateFeedbackReport } from "@/lib/ai/llm";
 
+// AI calls can be slow; give Vercel functions up to 60s instead of the default
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const { sessionId, track = "mock-interview" } = await req.json();
