@@ -11,7 +11,7 @@ import DebateIntroScreen from "@/components/DebateIntroScreen";
 import NegotiationIntroScreen from "@/components/NegotiationIntroScreen";
 import QuestionAudioControl from "@/components/QuestionAudioControl";
 import CameraPreview from "@/components/CameraPreview";
-import InterviewerTile from "@/components/InterviewerTile";
+import InterviewStage from "@/components/InterviewStage";
 import ProctoringBar from "@/components/ProctoringBar";
 import FullscreenWarning from "@/components/FullscreenWarning";
 import SystemCheck from "@/components/SystemCheck";
@@ -827,21 +827,11 @@ export default function InterviewPage() {
 
   const formatPrep = (secs: number) => `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
 
-  const currentSpokenQuestion = getSpokenTextForCurrentQuestion();
   const isSerious = interviewMode === "serious";
 
-  // Common Question Card component shared across both views
-  const QuestionCardContent = (
-    <div className="relative space-y-4 overflow-hidden rounded-3xl border border-line bg-white p-5 sm:p-6 shadow-sm">
-      <div
-        className={`absolute top-0 left-0 right-0 h-1.5 ${
-          state.isFollowUp ? "bg-amber-400" : isIeltsSpeaking ? "bg-tealbird" : "bg-moss-light"
-        }`}
-      />
-
-      {/* Card Header with Question Details */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
+  // Turn label and badges, shown above the question on the stage
+  const QuestionLabel = (
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span
             className={`text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${
               state.isFollowUp
@@ -872,19 +862,14 @@ export default function InterviewPage() {
             </span>
           )}
         </div>
+  );
 
-        <QuestionAudioControl
-          audioEnabled={audioEnabled}
-          onToggleAudio={setAudioEnabled}
-          isSpeaking={isSpeaking}
-          onSpeak={handleSpeakCurrent}
-          onStop={stop}
-        />
-      </div>
-
+  // The question and its extras, centered under Tota
+  const QuestionBody = (
+    <div className="space-y-4">
       {/* Debate motion and assigned side */}
       {isDebate && currentQuestionDetail?.motion && (
-        <div className="rounded-2xl border border-line bg-cream/60 p-3.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="rounded-2xl border border-line bg-paper/70 p-3.5 flex flex-wrap items-center justify-center gap-2">
           <p className="font-serif text-lg text-ink leading-snug">{currentQuestionDetail.motion}</p>
           <span
             className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
@@ -900,12 +885,12 @@ export default function InterviewPage() {
 
       {/* Negotiation brief: who you're talking to, your goal and walk-away */}
       {isNegotiation && currentQuestionDetail?.yourGoal && (
-        <div className="rounded-2xl border border-line bg-cream/60 p-3.5 space-y-2">
+        <div className="rounded-2xl border border-line bg-paper/70 p-3.5 space-y-2">
           <p className="text-xs text-stone-muted">
             <span aria-hidden="true">🤝 </span>
             Negotiating with <span className="text-ink font-medium">{currentQuestionDetail.counterpart}</span>
           </p>
-          <div className="flex flex-wrap gap-2 text-[11px]">
+          <div className="flex flex-wrap justify-center gap-2 text-[11px]">
             <span className="px-2.5 py-1 rounded-full bg-moss/5 border border-moss/15 text-ink">
               <span className="font-semibold text-moss">Goal:</span> {currentQuestionDetail.yourGoal}
             </span>
@@ -918,7 +903,7 @@ export default function InterviewPage() {
 
       {/* Small talk scene */}
       {isCommBuilder && currentQuestionDetail?.setting && !state.isFollowUp && (
-        <p className="text-xs text-stone-muted flex items-center gap-1.5">
+        <p className="text-xs text-stone-muted flex items-center justify-center gap-1.5">
           <span aria-hidden="true">📍</span>
           {currentQuestionDetail.setting}
         </p>
@@ -926,13 +911,13 @@ export default function InterviewPage() {
 
       {/* Main Question Text */}
       <div className="space-y-3">
-        <h2 className="font-serif font-normal text-2xl sm:text-2xl text-ink leading-relaxed">
+        <h2 className="font-serif font-normal text-2xl sm:text-[2rem] text-ink leading-snug">
           {isIeltsPart2 ? state.currentQuestion.split("\n")[0] : state.currentQuestion}
         </h2>
 
         {/* IELTS Part 2 Bullet Points */}
         {isIeltsPart2 && ieltsPart2Bullets.length > 0 && (
-          <div className="space-y-2 pt-3 border-t border-tealbird/20">
+          <div className="mx-auto max-w-xl space-y-2 pt-3 border-t border-tealbird/20 text-left">
             <p className="text-[11px] font-semibold text-tealbird-deep uppercase tracking-widest">
               You should say:
             </p>
@@ -940,7 +925,7 @@ export default function InterviewPage() {
               {ieltsPart2Bullets.map((bp: string, i: number) => (
                 <div
                   key={i}
-                  className="flex items-start gap-2.5 p-2.5 rounded-xl bg-cream/60 border border-line text-xs text-ink"
+                  className="flex items-start gap-2.5 p-2.5 rounded-xl bg-paper/70 border border-line text-xs text-ink"
                 >
                   <span className="w-5 h-5 rounded bg-tealbird/20 text-tealbird-deep text-[11px] font-bold flex items-center justify-center shrink-0">
                     {i + 1}
@@ -964,17 +949,17 @@ export default function InterviewPage() {
         };
         const c = (fw && colorMap[fw]) || colorMap.STAR;
         return (
-          <div className={`rounded-2xl border ${c.border} ${c.bg} p-3.5 space-y-2`}>
-            <div className="flex items-center gap-2">
+          <div className={`mx-auto max-w-2xl rounded-2xl border ${c.border} ${c.bg} p-3.5 space-y-2`}>
+            <div className="flex items-center justify-center gap-2">
               <span className={`text-[11px] font-semibold uppercase tracking-wider ${c.text}`}>
                 💡 {isDebate ? `Structure your ${String(fw).toLowerCase()}` : isNegotiation ? fw : `Structure with ${fw}`}
               </span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-center gap-2">
               {currentQuestionDetail.frameworkSteps?.map((step: FrameworkStepItem) => (
                 <div
                   key={step.letter}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cream/60 border border-line"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-paper/70 border border-line"
                 >
                   <span className={`w-4 h-4 rounded ${c.stepBg} ${c.text} text-[11px] font-bold flex items-center justify-center`}>
                     {step.letter}
@@ -993,7 +978,7 @@ export default function InterviewPage() {
 
   // Common Recorder Hub component (Preserves AudioRecorder mount to prevent unmount ghost audio)
   const RecorderHubContent = (
-    <div className="rounded-3xl border border-line bg-white p-4 sm:p-5 shadow-sm">
+    <div className="flex flex-col justify-center rounded-3xl border border-line bg-white p-4 sm:p-5 shadow-sm md:col-span-3">
       {state.isProcessing && (
         <div className="flex flex-col items-center justify-center py-8 space-y-4">
           <div className="relative">
@@ -1103,51 +1088,63 @@ export default function InterviewPage() {
 
   // Your side of the call when the camera is off
   const SelfViewPlaceholder = (
-    <div className="relative flex h-60 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-dashed sm:h-72 border-stone-soft/40 bg-paper p-6 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-cream border border-line" aria-hidden="true">
-        <svg viewBox="0 0 24 24" className="h-5 w-5 text-stone-muted" fill="none" stroke="currentColor" strokeWidth={1.8}>
+    <div className="relative flex h-full min-h-[14rem] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border border-line bg-ink/85 p-6 text-center">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-cream/10" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="h-5 w-5 text-cream/80" fill="none" stroke="currentColor" strokeWidth={1.8}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
         </svg>
       </span>
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-ink">Your camera is off</p>
-        <p className="mx-auto max-w-xs text-xs leading-relaxed text-stone-muted">
-          Turn it on to get feedback on eye contact and body language. Your video never leaves your device.
+        <p className="text-sm font-semibold text-cream">Your camera is off</p>
+        <p className="mx-auto max-w-xs text-xs leading-relaxed text-cream/70">
+          Turn it on for eye-contact and body-language feedback. Your video never leaves your device.
         </p>
       </div>
       <button
         type="button"
         onClick={handleRequestCamera}
-        className="rounded-xl bg-moss px-4 py-2 text-sm font-semibold text-cream transition-colors hover:bg-moss-deep"
+        className="rounded-xl bg-moss px-4 py-2 text-sm font-semibold text-cream transition-colors hover:bg-moss-light"
       >
         Turn on camera
       </button>
       {cameraError && (
-        <p role="alert" className="max-w-xs text-xs leading-snug text-beak-deep">
+        <p role="alert" className="max-w-xs text-xs leading-snug text-beak-soft">
           {cameraError}
         </p>
       )}
-      <span className="absolute bottom-3 left-3 rounded-lg bg-ink/75 px-2.5 py-1 text-xs font-medium text-cream">You</span>
+      <span className="absolute bottom-3 left-3 rounded-lg bg-ink/70 px-2.5 py-1 text-xs font-medium text-cream">You</span>
     </div>
   );
 
   const progressPercent = Math.round(((state.currentQuestionIndex + (state.isFollowUp ? 0.5 : 0)) / Math.max(1, state.totalQuestions)) * 100);
 
-  // The shared "video call" body: two tiles, the question, then the answer dock
+  // The shared body: Tota and the question on center stage, then the answer dock (60%) beside your camera (40%)
   const StudioBody = (
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <InterviewerTile
-          isSpeaking={isSpeaking}
-          isListening={isCurrentlyRecording}
-          isProcessing={state.isProcessing}
-          caption={currentSpokenQuestion}
-        />
-        {cameraActive ? <CameraPreview analyzerRef={analyzerRef} isRecording={isCurrentlyRecording} /> : SelfViewPlaceholder}
-      </div>
+      <InterviewStage
+        isSpeaking={isSpeaking}
+        isListening={isCurrentlyRecording}
+        isProcessing={state.isProcessing}
+        label={QuestionLabel}
+        controls={
+          <QuestionAudioControl
+            audioEnabled={audioEnabled}
+            onToggleAudio={setAudioEnabled}
+            isSpeaking={isSpeaking}
+            onSpeak={handleSpeakCurrent}
+            onStop={stop}
+          />
+        }
+      >
+        {QuestionBody}
+      </InterviewStage>
 
-      {QuestionCardContent}
-      {RecorderHubContent}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-5">
+        {RecorderHubContent}
+        <div className="md:col-span-2">
+          {cameraActive ? <CameraPreview analyzerRef={analyzerRef} isRecording={isCurrentlyRecording} /> : SelfViewPlaceholder}
+        </div>
+      </div>
 
       {state.lastTranscript && (
         <details className="group rounded-2xl border border-line bg-paper/70 px-4 py-3">

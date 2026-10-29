@@ -143,15 +143,15 @@ export default function CameraPreview({ analyzerRef, isRecording = false }: Came
     : postureIssue ?? null;
 
   return (
-    <div className="relative h-60 w-full overflow-hidden rounded-3xl border border-line bg-ink/90 sm:h-72">
+    <div className="relative h-full min-h-[14rem] w-full overflow-hidden rounded-3xl border border-line bg-ink/90" title="Private: your video stays on your device">
       <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover scale-x-[-1]" />
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
 
       {/* Status pills: eye contact always, posture and hands only when they need attention */}
       {streamReady && (
-        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
           <span
-            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium backdrop-blur-sm ${
+            className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium backdrop-blur-sm ${
               gaze.ok === true ? "bg-paper/90 text-moss" : gaze.ok === false ? "bg-amber-50/95 text-amber-800" : "bg-paper/90 text-stone-muted"
             }`}
           >
@@ -159,28 +159,25 @@ export default function CameraPreview({ analyzerRef, isRecording = false }: Came
             {calibrated || !faceDetected ? gaze.label : "Calibrating"}
           </span>
           {postureIssue && (
-            <span className="rounded-full bg-amber-50/95 px-2.5 py-1 text-xs font-medium text-amber-800 backdrop-blur-sm">Posture</span>
+            <span className="rounded-full bg-amber-50/95 px-2 py-0.5 text-[11px] font-medium text-amber-800 backdrop-blur-sm">Posture</span>
           )}
           {frame?.faceTouch && (
-            <span className="rounded-full bg-amber-50/95 px-2.5 py-1 text-xs font-medium text-amber-800 backdrop-blur-sm">Hands</span>
+            <span className="rounded-full bg-amber-50/95 px-2 py-0.5 text-[11px] font-medium text-amber-800 backdrop-blur-sm">Hands</span>
           )}
         </div>
       )}
 
       {/* Name badge with a recording dot */}
-      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-lg bg-ink/75 px-2.5 py-1 text-xs font-medium text-cream">
+      <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md bg-ink/75 px-2 py-0.5 text-[11px] font-medium text-cream">
         {isRecording && <span className="h-2 w-2 rounded-full bg-beak animate-pulse" aria-label="Recording" />}
         You
       </div>
 
-      {/* Privacy note and tracking toggle */}
-      <span className="absolute top-3 left-3 rounded-full bg-paper/90 px-2.5 py-1 text-[11px] text-stone-muted">
-        Private · stays on your device
-      </span>
+      {/* Tracking toggle (the privacy note lives in the tile's tooltip) */}
       <button
         type="button"
         onClick={() => setShowTracking((s) => !s)}
-        className="absolute bottom-3 right-3 rounded-lg bg-ink/60 px-2.5 py-1 text-[11px] text-cream hover:bg-ink/80 transition-colors"
+        className="absolute bottom-2 right-2 rounded-md bg-ink/60 px-2 py-0.5 text-[11px] text-cream hover:bg-ink/80 transition-colors"
         aria-pressed={showTracking}
       >
         {showTracking ? "Hide tracking" : "Show tracking"}
@@ -188,8 +185,8 @@ export default function CameraPreview({ analyzerRef, isRecording = false }: Came
 
       {/* Gentle coaching line */}
       {coach && (
-        <div className="absolute inset-x-0 bottom-12 flex justify-center px-4">
-          <p className="rounded-xl bg-paper/95 px-3 py-1.5 text-center text-xs font-medium text-ink shadow-sm">{coach}</p>
+        <div className="absolute inset-x-0 bottom-8 flex justify-center px-2">
+          <p className="rounded-lg bg-paper/95 px-2 py-1 text-center text-[11px] leading-snug font-medium text-ink shadow-sm">{coach}</p>
         </div>
       )}
     </div>
