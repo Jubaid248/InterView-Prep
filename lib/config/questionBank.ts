@@ -1,4 +1,6 @@
-export type FrameworkType = "STAR" | "CAR" | "SEE" | "PAR";
+import { pickRandom, type FollowUpStyle } from "@/lib/config/sessionScript";
+
+export type FrameworkType = "ARE" | "STAR" | "CAR" | "SEE" | "PAR" | "PREP" | "PPF";
 
 export interface FrameworkStep {
   letter: string;
@@ -18,9 +20,23 @@ export interface QuestionBankItem {
   frameworkSteps: FrameworkStep[];
   exampleAnswer: string;
   exampleSentences: ExampleSentence[];
+  /** Small talk only: where the conversation happens and who Tota is playing. */
+  setting?: string;
+  /** Spoken by Tota before the prompt (scene-setting or a transition). */
+  spokenPrefix?: string;
+  followUpStyle?: FollowUpStyle | null;
 }
 
 export const FRAMEWORK_DEFINITIONS: Record<FrameworkType, { name: string; description: string; steps: FrameworkStep[] }> = {
+  ARE: {
+    name: "ARE Method",
+    description: "Best for starting small talk and keeping it flowing naturally.",
+    steps: [
+      { letter: "A", label: "Anchor", description: "Comment on something you both share: the place, the event or the moment." },
+      { letter: "R", label: "Reveal", description: "Share a small, genuine detail about yourself." },
+      { letter: "E", label: "Encourage", description: "Hand the conversation back with an open question." },
+    ],
+  },
   STAR: {
     name: "STAR Framework",
     description: "Best for behavioral stories and structured interview questions.",
@@ -33,7 +49,7 @@ export const FRAMEWORK_DEFINITIONS: Record<FrameworkType, { name: string; descri
   },
   CAR: {
     name: "CAR Framework",
-    description: "Best for small talk, casual conversations, and engaging stories.",
+    description: "Best for telling short, engaging stories in casual conversation.",
     steps: [
       { letter: "C", label: "Context", description: "Briefly share the background, event, or topic." },
       { letter: "A", label: "Action", description: "Describe what happened, what you did, or what you experienced." },
@@ -47,6 +63,25 @@ export const FRAMEWORK_DEFINITIONS: Record<FrameworkType, { name: string; descri
       { letter: "S", label: "Statement", description: "Make your core point or state the main concept clearly." },
       { letter: "E", label: "Example", description: "Provide a concrete, relatable example or illustration." },
       { letter: "E", label: "Explanation", description: "Explain why the example proves or clarifies your core statement." },
+    ],
+  },
+  PREP: {
+    name: "PREP Method",
+    description: "Best for sharing an opinion clearly and persuasively in under a minute.",
+    steps: [
+      { letter: "P", label: "Point", description: "State your opinion in one clear sentence." },
+      { letter: "R", label: "Reason", description: "Give the main reason you believe it." },
+      { letter: "E", label: "Example", description: "Back it up with a specific example or fact." },
+      { letter: "P", label: "Point", description: "Restate your point so it sticks." },
+    ],
+  },
+  PPF: {
+    name: "Past–Present–Future",
+    description: "Best for introducing yourself and answering 'So, what do you do?'",
+    steps: [
+      { letter: "P", label: "Past", description: "Where you started or the experience that led you here." },
+      { letter: "N", label: "Present", description: "What you do now and what you focus on." },
+      { letter: "F", label: "Future", description: "Where you're heading or what you're excited about next." },
     ],
   },
   PAR: {
@@ -119,7 +154,7 @@ export const questionBank: QuestionBankItem[] = [
     ],
   },
 
-  // --- CAR Framework Prompts (Small talk & casual conversation) ---
+  // --- CAR Framework Prompts (short stories in conversation) ---
   {
     id: "car-1",
     framework: "CAR",
@@ -280,27 +315,261 @@ export const questionBank: QuestionBankItem[] = [
       { text: "Overcoming that fear gave me the confidence to present our team roadmap to over 100 executives last quarter.", stepLetter: "R" },
     ],
   },
+  // --- ARE Method: small talk scenarios (Tota plays the other person) ---
+  {
+    id: "are-1",
+    framework: "ARE",
+    setting: "A networking event · Tota is Sam, another guest",
+    spokenPrefix: "Let's start with some small talk. Imagine we're at a networking event, and I'm Sam, another guest.",
+    promptText: "Hi! I don't think we've met. I'm Sam. How do you know the organisers?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "Hi Sam, nice to meet you. This is a great turnout for a Tuesday night. I came with a friend from work who knows one of the organisers, and I'm trying to meet more people in product design. What about you, what brings you here tonight?",
+    exampleSentences: [
+      { text: "Hi Sam, nice to meet you. This is a great turnout for a Tuesday night.", stepLetter: "A" },
+      { text: "I came with a friend from work who knows one of the organisers, and I'm trying to meet more people in product design.", stepLetter: "R" },
+      { text: "What about you, what brings you here tonight?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-2",
+    framework: "ARE",
+    setting: "The office coffee machine on a Monday · Tota is Priya, a colleague",
+    spokenPrefix: "Let's start with some small talk. It's Monday morning at the office coffee machine, and I'm Priya, a colleague.",
+    promptText: "Morning! Did you get up to anything fun this weekend?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "Morning, Priya! I definitely need this coffee after the weekend. I finally tried that new hiking trail by the river, and my legs are still recovering. Did you do anything good, or was it a quiet one?",
+    exampleSentences: [
+      { text: "Morning, Priya! I definitely need this coffee after the weekend.", stepLetter: "A" },
+      { text: "I finally tried that new hiking trail by the river, and my legs are still recovering.", stepLetter: "R" },
+      { text: "Did you do anything good, or was it a quiet one?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-3",
+    framework: "ARE",
+    setting: "An airport gate with a delayed flight · Tota is a fellow passenger",
+    spokenPrefix: "Let's start with some small talk. We're both waiting at an airport gate, and our flight has just been delayed.",
+    promptText: "Looks like we'll be here a while. Are you heading home, or travelling for work?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "It really does. At least we've got good seats by the window. I'm heading home after a conference, so honestly an extra hour isn't the end of the world. How about you, is the delay going to mess up your plans?",
+    exampleSentences: [
+      { text: "It really does. At least we've got good seats by the window.", stepLetter: "A" },
+      { text: "I'm heading home after a conference, so honestly an extra hour isn't the end of the world.", stepLetter: "R" },
+      { text: "How about you, is the delay going to mess up your plans?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-4",
+    framework: "ARE",
+    setting: "Lunch on your first day at a new job · Tota is Jordan, a teammate",
+    spokenPrefix: "Let's start with some small talk. It's lunchtime on your first day at a new job, and I'm Jordan, your new teammate.",
+    promptText: "So you're the new person on the team! How's your first day going so far?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "It's going really well, thanks. Everyone's been so welcoming, and this lunch spot is a nice surprise. I've mostly been setting up my laptop and trying to remember everyone's names. How long have you been on the team?",
+    exampleSentences: [
+      { text: "It's going really well, thanks. Everyone's been so welcoming, and this lunch spot is a nice surprise.", stepLetter: "A" },
+      { text: "I've mostly been setting up my laptop and trying to remember everyone's names.", stepLetter: "R" },
+      { text: "How long have you been on the team?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-5",
+    framework: "ARE",
+    setting: "The lift in your building · Tota is a neighbour",
+    spokenPrefix: "Let's start with some small talk. We're in the lift of your apartment building, and I'm a neighbour you haven't met yet.",
+    promptText: "Hi, I think you've just moved in on the fourth floor? How are you finding the building?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "Yes, that's me! It's been great so far, and this lift is a lot faster than my last one. I moved here for a new job, so I'm still figuring out the neighbourhood. Have you lived here long? Any good places nearby I should know about?",
+    exampleSentences: [
+      { text: "Yes, that's me! It's been great so far, and this lift is a lot faster than my last one.", stepLetter: "A" },
+      { text: "I moved here for a new job, so I'm still figuring out the neighbourhood.", stepLetter: "R" },
+      { text: "Have you lived here long? Any good places nearby I should know about?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-6",
+    framework: "ARE",
+    setting: "Waiting for others to join a video call · Tota is Alex, a client",
+    spokenPrefix: "Let's start with some small talk. We're on a video call waiting for the others to join, and I'm Alex, a client.",
+    promptText: "Looks like we're the first two here. How's your week been so far?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "Always good to be early. It's been a busy week, but in a good way. We've been wrapping up a project, so I'm looking forward to a calmer Friday. How about yours, are things busy on your side too?",
+    exampleSentences: [
+      { text: "Always good to be early.", stepLetter: "A" },
+      { text: "It's been a busy week, but in a good way. We've been wrapping up a project, so I'm looking forward to a calmer Friday.", stepLetter: "R" },
+      { text: "How about yours, are things busy on your side too?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-7",
+    framework: "ARE",
+    setting: "A friend's birthday party · Tota is Leo, a friend of the host",
+    spokenPrefix: "Let's start with some small talk. We're at a friend's birthday party, and I'm Leo. We've never met.",
+    promptText: "Hey, I'm Leo. So how do you know Nadia?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "Hi Leo! She's thrown a great party, the food is amazing. Nadia and I met at university, we were in the same photography club. How about you, how did you two meet?",
+    exampleSentences: [
+      { text: "Hi Leo! She's thrown a great party, the food is amazing.", stepLetter: "A" },
+      { text: "Nadia and I met at university, we were in the same photography club.", stepLetter: "R" },
+      { text: "How about you, how did you two meet?", stepLetter: "E" },
+    ],
+  },
+  {
+    id: "are-8",
+    framework: "ARE",
+    setting: "Lunch at a conference · Tota is another attendee",
+    spokenPrefix: "Let's start with some small talk. It's lunchtime at a conference, and I'm another attendee looking for a seat.",
+    promptText: "Mind if I sit here? What did you think of the morning keynote?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.ARE.steps,
+    exampleAnswer:
+      "Of course, go ahead. The keynote was a strong start to the day. I really liked the part about remote teams, because that's exactly what we're dealing with at work right now. Which sessions are you planning to see this afternoon?",
+    exampleSentences: [
+      { text: "Of course, go ahead. The keynote was a strong start to the day.", stepLetter: "A" },
+      { text: "I really liked the part about remote teams, because that's exactly what we're dealing with at work right now.", stepLetter: "R" },
+      { text: "Which sessions are you planning to see this afternoon?", stepLetter: "E" },
+    ],
+  },
+
+  // --- PREP Method prompts (opinions) ---
+  {
+    id: "prep-1",
+    framework: "PREP",
+    promptText: "Do you think people work better from home or from the office?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PREP.steps,
+    exampleAnswer:
+      "I think a mix of both works best. Focused work is easier at home, but collaboration is faster in person. On my last team, we kept two office days for planning and reviews, and our delivery speed actually improved. So for most teams, a hybrid setup gets the best of both worlds.",
+    exampleSentences: [
+      { text: "I think a mix of both works best.", stepLetter: "P" },
+      { text: "Focused work is easier at home, but collaboration is faster in person.", stepLetter: "R" },
+      { text: "On my last team, we kept two office days for planning and reviews, and our delivery speed actually improved.", stepLetter: "E" },
+      { text: "So for most teams, a hybrid setup gets the best of both worlds.", stepLetter: "P" },
+    ],
+  },
+  {
+    id: "prep-2",
+    framework: "PREP",
+    promptText: "What's one habit you think everyone should build, and why?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PREP.steps,
+    exampleAnswer:
+      "I think everyone should plan their day the night before. It takes five minutes, but it removes the stress of deciding what to do first. When I started doing it, I stopped wasting my first hour on email and finished my most important task before lunch. That's why I'd recommend a simple evening plan to anyone.",
+    exampleSentences: [
+      { text: "I think everyone should plan their day the night before.", stepLetter: "P" },
+      { text: "It takes five minutes, but it removes the stress of deciding what to do first.", stepLetter: "R" },
+      { text: "When I started doing it, I stopped wasting my first hour on email and finished my most important task before lunch.", stepLetter: "E" },
+      { text: "That's why I'd recommend a simple evening plan to anyone.", stepLetter: "P" },
+    ],
+  },
+  {
+    id: "prep-3",
+    framework: "PREP",
+    promptText: "Is it better to specialise early in your career or to stay a generalist?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PREP.steps,
+    exampleAnswer:
+      "I'd say stay broad first, then specialise. Trying different areas early shows you what you're genuinely good at. A friend of mine started in sales, moved into marketing, and only then found her real strength in product, and she's thriving now. So explore first, and specialise once you know where you fit.",
+    exampleSentences: [
+      { text: "I'd say stay broad first, then specialise.", stepLetter: "P" },
+      { text: "Trying different areas early shows you what you're genuinely good at.", stepLetter: "R" },
+      { text: "A friend of mine started in sales, moved into marketing, and only then found her real strength in product, and she's thriving now.", stepLetter: "E" },
+      { text: "So explore first, and specialise once you know where you fit.", stepLetter: "P" },
+    ],
+  },
+  {
+    id: "prep-4",
+    framework: "PREP",
+    promptText: "Should phones be allowed in classrooms?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PREP.steps,
+    exampleAnswer:
+      "I think phones should be allowed, but only for specific learning activities. Banning them completely ignores how useful they can be for research and practice. My cousin's school lets students use phones for quizzes and language apps, then collects them for the rest of the lesson, and both grades and focus improved. So clear rules work better than a total ban.",
+    exampleSentences: [
+      { text: "I think phones should be allowed, but only for specific learning activities.", stepLetter: "P" },
+      { text: "Banning them completely ignores how useful they can be for research and practice.", stepLetter: "R" },
+      { text: "My cousin's school lets students use phones for quizzes and language apps, then collects them for the rest of the lesson, and both grades and focus improved.", stepLetter: "E" },
+      { text: "So clear rules work better than a total ban.", stepLetter: "P" },
+    ],
+  },
+
+  // --- Past–Present–Future prompts (introductions) ---
+  {
+    id: "ppf-1",
+    framework: "PPF",
+    promptText: "Tell me a little about yourself.",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PPF.steps,
+    exampleAnswer:
+      "I studied business, and my first job was in customer support, which taught me how much small details matter to people. Now I work as a project coordinator, keeping three teams aligned on deadlines and priorities. Next, I'd love to move into product management, where I can shape what we build, not just how we deliver it.",
+    exampleSentences: [
+      { text: "I studied business, and my first job was in customer support, which taught me how much small details matter to people.", stepLetter: "P" },
+      { text: "Now I work as a project coordinator, keeping three teams aligned on deadlines and priorities.", stepLetter: "N" },
+      { text: "Next, I'd love to move into product management, where I can shape what we build, not just how we deliver it.", stepLetter: "F" },
+    ],
+  },
+  {
+    id: "ppf-2",
+    framework: "PPF",
+    promptText: "So, what do you do?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PPF.steps,
+    exampleAnswer:
+      "I got into design by building websites for friends while I was at university. These days I'm a UX designer at a health app, mostly working on making appointment booking simpler. Over the next year, I'm hoping to lead my first full redesign.",
+    exampleSentences: [
+      { text: "I got into design by building websites for friends while I was at university.", stepLetter: "P" },
+      { text: "These days I'm a UX designer at a health app, mostly working on making appointment booking simpler.", stepLetter: "N" },
+      { text: "Over the next year, I'm hoping to lead my first full redesign.", stepLetter: "F" },
+    ],
+  },
+  {
+    id: "ppf-3",
+    framework: "PPF",
+    promptText: "How did you get into your field?",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PPF.steps,
+    exampleAnswer:
+      "I actually started in accounting, but I kept automating my spreadsheets and realised I enjoyed that part the most. So I took evening classes in programming, and now I work as a data analyst building reports for the finance team. My goal is to become a data engineer and build the systems behind those reports.",
+    exampleSentences: [
+      { text: "I actually started in accounting, but I kept automating my spreadsheets and realised I enjoyed that part the most.", stepLetter: "P" },
+      { text: "So I took evening classes in programming, and now I work as a data analyst building reports for the finance team.", stepLetter: "N" },
+      { text: "My goal is to become a data engineer and build the systems behind those reports.", stepLetter: "F" },
+    ],
+  },
+  {
+    id: "ppf-4",
+    framework: "PPF",
+    promptText: "Introduce yourself to your new team in under a minute.",
+    frameworkSteps: FRAMEWORK_DEFINITIONS.PPF.steps,
+    exampleAnswer:
+      "Hi everyone, I'm Rahim. I spent the last four years at a logistics startup, where I helped grow the support team from three people to twenty. I'm joining you as operations lead, so I'll be looking at how we can make onboarding smoother. Over the next few months, I'm excited to learn how each of you works and where I can help most.",
+    exampleSentences: [
+      { text: "I spent the last four years at a logistics startup, where I helped grow the support team from three people to twenty.", stepLetter: "P" },
+      { text: "I'm joining you as operations lead, so I'll be looking at how we can make onboarding smoother.", stepLetter: "N" },
+      { text: "Over the next few months, I'm excited to learn how each of you works and where I can help most.", stepLetter: "F" },
+    ],
+  },
 ];
+
+const METHOD_FRAMEWORKS: FrameworkType[] = ["STAR", "CAR", "SEE", "PAR", "PREP", "PPF"];
 
 /**
  * Session-start logic for communication-builder:
- * Randomly selects 3 questions from 3 DIFFERENT frameworks out of (STAR, CAR, SEE, PAR).
- * Never repeats a framework twice in one session.
+ * one small-talk scenario (ARE) where Tota plays the other person, then 3 prompts
+ * that each practice a different speaking method. Never repeats a method.
  */
 export function getCommunicationBuilderSessionQuestions(): QuestionBankItem[] {
-  const frameworks: FrameworkType[] = ["STAR", "CAR", "SEE", "PAR"];
+  const [smallTalk] = pickRandom(questionBank.filter((q) => q.framework === "ARE"), 1);
+  const methods = pickRandom(METHOD_FRAMEWORKS, 3);
 
-  // Shuffle frameworks to pick 3 distinct frameworks
-  const shuffledFrameworks = [...frameworks].sort(() => Math.random() - 0.5);
-  const selectedFrameworks = shuffledFrameworks.slice(0, 3);
+  const methodPrompts = methods.map((fw, i) => {
+    const [item] = pickRandom(questionBank.filter((q) => q.framework === fw), 1);
+    const name = FRAMEWORK_DEFINITIONS[fw].name;
+    const transition =
+      i === 0
+        ? `Thanks for chatting. Now let's practice speaking with a method. For this one, try the ${name}.`
+        : `Next, try the ${name}.`;
+    return { ...item, spokenPrefix: transition, followUpStyle: "method-probe" as const };
+  });
 
-  const selectedQuestions: QuestionBankItem[] = [];
-
-  for (const fw of selectedFrameworks) {
-    const matchingQuestions = questionBank.filter((q) => q.framework === fw);
-    const randomIndex = Math.floor(Math.random() * matchingQuestions.length);
-    selectedQuestions.push(matchingQuestions[randomIndex]);
-  }
-
-  return selectedQuestions;
+  return [{ ...smallTalk, followUpStyle: "small-talk" }, ...methodPrompts];
 }

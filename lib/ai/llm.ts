@@ -4,6 +4,21 @@
  */
 
 import { saveFeedbackReport } from "@/lib/store";
+import {
+  BANNED_TOPIC_PATTERN,
+  FOLLOW_UP_RULES,
+  INTERVIEW_BLUEPRINT,
+  INTERVIEWER_RULES,
+  buildQuestionPlanSystemPrompt,
+  type QuestionDetail,
+} from "@/lib/ai/interviewerRules";
+import { FOLLOW_UP_PROMPTS, buildScriptedFollowUpMessage } from "@/lib/ai/trackRules";
+import {
+  mergeTallies,
+  scoreBodyLanguage,
+  summarizeForPrompt,
+  type BodyLanguageTally,
+} from "@/lib/bodyLanguage/metrics";
 
 export interface TrackPromptTemplate {
   systemPrompt?: string;
@@ -13,18 +28,25 @@ export interface TrackPromptTemplate {
 
 export const promptTemplates: Record<string, TrackPromptTemplate> = {
   "mock-interview": {
-    systemPrompt:
-      "You are an expert technical interviewer and executive career coach. Your task is to analyze the candidate's resume and job description, then generate 5 to 6 realistic, highly tailored interview questions — a mix of behavioral and role-specific questions. Reference specific details, skills, and past experience from the resume and job description. You MUST return a JSON object containing a 'questions' key with an array of 5 to 6 question strings.",
-    systemPromptFollowUp:
-      "You are an expert interviewer conducting a live interview. Based on the interview question asked and the candidate's transcribed response, generate ONE natural follow-up question that references something specific the user said in their answer. Probe deeper into their technical decisions, metrics, outcomes, or reasoning. Do NOT ask generic questions like 'Can you elaborate?' or 'Tell me more'. Return only the text of the follow-up question.",
+    systemPrompt: buildQuestionPlanSystemPrompt(),
+    systemPromptFollowUp: `${INTERVIEWER_RULES}\n\n${FOLLOW_UP_RULES}`,
     feedbackSystemPrompt:
-      "You are an expert technical interviewer and executive career coach. Evaluate the interview transcript against the candidate's resume and job description. For each answer: 1) evaluate structure using the STAR method (Situation, Task, Action, Result); 2) assign a structureScore (0-100) and relevanceScore (0-100); 3) provide honest, specific feedback on what worked well and what needs improvement (avoid generic praise); 4) provide a rewritten example answer anchored directly in the candidate's actual spoken response (not a generic template). Output a valid JSON object with a 'perAnswerFeedback' array and an 'overallSummary' string.",
+      "You are an expert technical interviewer and executive career coach. Evaluate the interview transcript against the candidate's resume and job description. Each question lists the competency it assessed and the signals of a strong answer (Look for). For each answer: 1) evaluate structure using the STAR method (Situation, Task, Action, Result); 2) assign a structureScore (0-100) and relevanceScore (0-100), where relevance reflects how well the answer demonstrated the target competency; 3) provide honest, specific feedback on what worked well and what needs improvement, naming which Look for signals were present and which were missing (avoid generic praise); 4) provide a rewritten example answer anchored directly in the candidate's actual spoken response (not a generic template). Output a valid JSON object with a 'perAnswerFeedback' array and an 'overallSummary' string.",
   },
   "communication-builder": {
-    systemPromptFollowUp:
-      "You are an expert communication and speech coach conducting a live communication practice session. Based on the prompt given and the candidate's transcribed response, generate ONE natural, concise follow-up question. The follow-up MUST reference something specific the user said in their answer to probe deeper into their clarity, reasoning, structure, or example. Do NOT ask generic questions like 'Can you elaborate?'. Return only the text of the follow-up question.",
+    systemPromptFollowUp: FOLLOW_UP_PROMPTS["method-probe"],
     feedbackSystemPrompt:
-      "You are an expert communication and public speaking coach. Evaluate the user's speech transcript against the prompt provided. For each answer: 1) evaluate structureScore (0-100) based on the clarity, structure, and logical flow of the response (not STAR specifically, since there is no job context); 2) evaluate relevanceScore (0-100) based on how directly and concisely the answer addressed the prompt; 3) provide honest, actionable feedback on whatWorked and whatToImprove (avoid generic praise); 4) provide a rewrittenExample answer anchored directly in what the user actually said (not a generic template). Output a valid JSON object containing a 'perAnswerFeedback' array (with structureScore, relevanceScore, whatWorked, whatToImprove, rewrittenExample) and an 'overallSummary' string.",
+      "You are an expert communication and public speaking coach. Each prompt in the transcript names the speaking method it practiced. The ARE method (Anchor, Reveal, Encourage) is small talk: judge whether the user anchored to the shared moment, revealed something genuine about themselves, encouraged the other person with an open question, and sounded warm and natural rather than scripted. For the other methods (STAR, CAR, SEE, PAR, PREP, Past-Present-Future), judge how clearly each step of that method came through. For each answer: 1) structureScore (0-100) for how well the method's steps were used; 2) relevanceScore (0-100) for how directly, concisely and naturally the answer fit the prompt or conversation; 3) honest, actionable whatWorked and whatToImprove, naming any missing step (avoid generic praise); 4) a rewrittenExample anchored in what the user actually said, using the method properly. Output a valid JSON object containing a 'perAnswerFeedback' array (with structureScore, relevanceScore, whatWorked, whatToImprove, rewrittenExample) and an 'overallSummary' string.",
+  },
+  "debate-practice": {
+    systemPromptFollowUp: FOLLOW_UP_PROMPTS["debate-rebuttal"],
+    feedbackSystemPrompt:
+      "You are an experienced debate coach and adjudicator. The user argued an assigned side of a motion against Tota in three rounds: an opening statement (then answered Tota's rebuttal), an evidence round (then answered Tota's cross-examination question), and a closing statement. For each round: 1) structureScore (0-100) for argument structure: a clear assertion, reasoning, evidence and impact (for the closing: naming the clash, weighing, and a clear finish); 2) relevanceScore (0-100) for persuasiveness and responsiveness: did they stay on their side, directly answer Tota's rebuttal or question, and avoid unsupported claims; 3) honest whatWorked and whatToImprove that reference their actual words and name logical gaps or missing evidence; 4) a rewrittenExample: a stronger version of their own argument, not a new one. In overallSummary, state whether the user won the debate on the strength of their arguments and the single most important thing to practice next. Output a valid JSON object with a 'perAnswerFeedback' array and an 'overallSummary' string.",
+  },
+  "negotiation-practice": {
+    systemPromptFollowUp: FOLLOW_UP_PROMPTS["negotiation-counterpart"],
+    feedbackSystemPrompt:
+      "You are an expert negotiation coach. The user role-played a negotiation against Tota playing the counterpart, over four rounds: opening, handling an objection, responding to a conditional offer under pressure, and closing. The context includes the user's private goal and walk-away point, and the counterpart's hidden interests and real flexibility. For each round: 1) structureScore (0-100) for negotiation technique: building rapport, anchoring ambitiously with a justification, asking open questions to uncover interests, labelling the other side's concerns, trading concessions with if-then offers instead of giving them away, resisting pressure tactics, and summarising terms clearly at the close; 2) relevanceScore (0-100) for outcome and relationship: did they move toward their goal, stay above their walk-away, and keep a collaborative tone; 3) honest whatWorked and whatToImprove that reference their actual words and name specific techniques they used or missed; 4) a rewrittenExample: a stronger version of what they said in that round. In overallSummary, estimate the deal they reached compared with their goal and walk-away, say whether they left value on the table (mention any of the counterpart's flexibility or interests they never discovered), and name the single most important technique to practice next. Output a valid JSON object with a 'perAnswerFeedback' array and an 'overallSummary' string.",
   },
   "ielts-speaking": {
     systemPromptFollowUp:
@@ -76,8 +98,8 @@ async function getAvailableModels(apiKey: string): Promise<string[]> {
 }
 
 export type InitialQuestionsResult =
-  | { questions: string[]; error?: never }
-  | { questions?: never; error: string };
+  | { questions: string[]; details?: QuestionDetail[]; error?: never }
+  | { questions?: never; details?: never; error: string };
 
 export async function generateInitialQuestions(
   track: string,
@@ -109,7 +131,8 @@ export async function generateInitialQuestions(
     return { error };
   }
 
-  const userMessageContent = `RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}\n\nPlease generate 5-6 tailored interview questions as a JSON object with a "questions" array of strings.`;
+  const questionCount = INTERVIEW_BLUEPRINT.length;
+  const userMessageContent = `RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}\n\nPlease generate exactly ${questionCount} interview questions following the blueprint, as a JSON object with a "questions" array.`;
   const models = await getAvailableModels(apiKey);
   const errors: string[] = [];
 
@@ -145,10 +168,10 @@ export async function generateInitialQuestions(
       ];
 
       let content = await sendRequest(initialMessages);
-      let questions = parseQuestionsJson(content);
+      let plan = parseQuestionsJson(content);
 
-      // If parsing fails, retry once with explicit JSON instruction
-      if (!questions || questions.length === 0) {
+      // If parsing fails or the plan breaks the rulebook, retry once with explicit instructions
+      if (!isValidPlan(plan, questionCount)) {
         console.warn(`⚠️ [generateInitialQuestions] First JSON parse attempt failed for model ${model}, retrying once...`);
         const retryMessages = [
           ...initialMessages,
@@ -156,16 +179,16 @@ export async function generateInitialQuestions(
           {
             role: "user",
             content:
-              "Your response could not be parsed into a JSON object with a 'questions' array. Please return ONLY a valid JSON object matching format: { \"questions\": [\"Question 1\", \"Question 2\", ...] }",
+              `Your response was not a valid plan. Return ONLY a JSON object with a "questions" array of exactly ${questionCount} objects (stage, question, competency, anchor, lookFor), one per blueprint stage, and make sure no question touches a protected personal topic.`,
           },
         ];
 
         content = await sendRequest(retryMessages);
-        questions = parseQuestionsJson(content);
+        plan = parseQuestionsJson(content);
       }
 
-      if (questions && questions.length > 0) {
-        return { questions };
+      if (isValidPlan(plan, questionCount)) {
+        return { questions: plan.questions, details: plan.details };
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
@@ -186,7 +209,9 @@ export async function generateInitialQuestions(
   return { error: finalError };
 }
 
-function parseQuestionsJson(raw: string): string[] | null {
+type ParsedQuestionPlan = { questions: string[]; details: QuestionDetail[] };
+
+function parseQuestionsJson(raw: string): ParsedQuestionPlan | null {
   try {
     let cleaned = raw.trim();
     cleaned = cleaned.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
@@ -198,9 +223,16 @@ function parseQuestionsJson(raw: string): string[] | null {
     const parsed = JSON.parse(cleaned);
     const rawQuestions = parsed.questions || parsed.interviewQuestions;
     if (Array.isArray(rawQuestions) && rawQuestions.length > 0) {
-      return rawQuestions
-        .map((q: any) => (typeof q === "string" ? q : q?.question || q?.text || String(q)))
-        .filter(Boolean);
+      const details: QuestionDetail[] = rawQuestions
+        .map((q: any, i: number) => ({
+          stage: typeof q === "object" && q?.stage ? String(q.stage) : INTERVIEW_BLUEPRINT[i]?.stage || "",
+          question: typeof q === "string" ? q : q?.question || q?.text || String(q),
+          competency: typeof q === "object" && q?.competency ? String(q.competency) : "",
+          anchor: typeof q === "object" && q?.anchor ? String(q.anchor) : "",
+          lookFor: typeof q === "object" && Array.isArray(q?.lookFor) ? q.lookFor.map(String) : [],
+        }))
+        .filter((d: QuestionDetail) => Boolean(d.question));
+      return { questions: details.map((d) => d.question), details };
     }
   } catch (e) {
     // Return null to signal parse failure for retry trigger
@@ -208,14 +240,49 @@ function parseQuestionsJson(raw: string): string[] | null {
   return null;
 }
 
+function isValidPlan(plan: ParsedQuestionPlan | null, expectedCount: number): plan is ParsedQuestionPlan {
+  if (!plan || plan.questions.length < expectedCount) return false;
+  return !plan.questions.some((q) => BANNED_TOPIC_PATTERN.test(q));
+}
+
 export type FollowUpResult =
   | { followUpQuestion: string; error?: never }
   | { followUpQuestion?: never; error: string };
 
+export interface FollowUpContext {
+  resumeText?: string;
+  jobDescription?: string;
+  /** The current question's detail; its followUpStyle picks the follow-up persona. */
+  detail?: any;
+  /** Earlier turns of the conversation, for role-plays that must stay consistent (negotiation). */
+  history?: string;
+}
+
+const CONTEXT_CHAR_LIMIT = 3000;
+
+function buildFollowUpUserMessage(
+  currentQuestion: string,
+  userAnswerTranscript: string,
+  context?: FollowUpContext
+): string {
+  const base = `INTERVIEW QUESTION ASKED:\n${currentQuestion}\n\nCANDIDATE'S TRANSCRIBED ANSWER:\n${userAnswerTranscript}`;
+  if (!context) return `${base}\n\nPlease generate ONE natural, specific follow-up question.`;
+
+  const { detail, resumeText, jobDescription } = context;
+  const intent = detail
+    ? `\n\nQUESTION INTENT:\nStage: ${detail.stage || "N/A"}\nCompetency: ${detail.competency || "N/A"}\nAnchor: ${detail.anchor || "N/A"}\nLook for: ${(detail.lookFor || []).join("; ") || "N/A"}`
+    : "";
+  const cv = resumeText ? `\n\nCANDIDATE CV (excerpt):\n${resumeText.slice(0, CONTEXT_CHAR_LIMIT)}` : "";
+  const jd = jobDescription ? `\n\nJOB DESCRIPTION (excerpt):\n${jobDescription.slice(0, CONTEXT_CHAR_LIMIT)}` : "";
+
+  return `${base}${intent}${cv}${jd}\n\nJudge the answer against the question intent, then generate ONE follow-up question following the follow-up rules.`;
+}
+
 export async function generateFollowUp(
   track: string,
   currentQuestion: string,
-  userAnswerTranscript: string
+  userAnswerTranscript: string,
+  context?: FollowUpContext
 ): Promise<FollowUpResult> {
   const apiKey = process.env.GROQ_API_KEY;
 
@@ -242,6 +309,11 @@ export async function generateFollowUp(
     return { error };
   }
 
+  // Scripted tracks pick a persona per question (examiner probe, small-talk partner, coach, debate opponent)
+  const style = context?.detail?.followUpStyle;
+  const scriptedStyle: keyof typeof FOLLOW_UP_PROMPTS | null =
+    style && style !== "interview" && style in FOLLOW_UP_PROMPTS ? style : null;
+
   const models = await getAvailableModels(apiKey);
   const errors: string[] = [];
 
@@ -256,10 +328,12 @@ export async function generateFollowUp(
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: template.systemPromptFollowUp },
+            { role: "system", content: scriptedStyle ? FOLLOW_UP_PROMPTS[scriptedStyle] : template.systemPromptFollowUp },
             {
               role: "user",
-              content: `INTERVIEW QUESTION ASKED:\n${currentQuestion}\n\nCANDIDATE'S TRANSCRIBED ANSWER:\n${userAnswerTranscript}\n\nPlease generate ONE natural, specific follow-up question.`,
+              content: scriptedStyle
+                ? buildScriptedFollowUpMessage(scriptedStyle, currentQuestion, userAnswerTranscript, context?.detail, context?.history)
+                : buildFollowUpUserMessage(currentQuestion, userAnswerTranscript, context),
             },
           ],
           temperature: 0.7,
@@ -347,8 +421,9 @@ export async function generateFeedbackReport(track: string, session: any): Promi
   let totalEyeContact = 0;
   let eyeContactCount = 0;
   const movementCounts: Record<string, number> = { low: 0, moderate: 0, high: 0 };
+  const sessionTallies: { tally: BodyLanguageTally; q: number }[] = [];
 
-  const perAnswerMetrics = answers.map((answer) => {
+  const perAnswerMetrics = answers.map((answer, answerIdx) => {
     const mainTranscript = answer.answerTranscript || "";
     const followUpTranscript = answer.followUpTranscript || "";
     const combinedTranscript = `${mainTranscript} ${followUpTranscript}`.trim();
@@ -366,8 +441,21 @@ export async function generateFeedbackReport(track: string, session: any): Promi
       paceCount++;
     }
 
-    const eyeContact = typeof answer.eyeContactPercent === "number" ? answer.eyeContactPercent : null;
-    const movement = answer.movementScore || null;
+    // Main answer + follow-up eye-movement/posture tallies, scored together
+    const q = (typeof answer.questionIndex === "number" ? answer.questionIndex : answerIdx) + 1;
+    const blTally = mergeTallies([
+      { tally: answer.bodyLanguage, q },
+      { tally: answer.followUpBodyLanguage, q },
+    ]);
+    if (blTally) sessionTallies.push({ tally: blTally, q });
+    const bodyLanguage = blTally ? scoreBodyLanguage(blTally) : null;
+
+    const eyeContact = bodyLanguage
+      ? bodyLanguage.stats.eyeContactPercent
+      : typeof answer.eyeContactPercent === "number"
+      ? answer.eyeContactPercent
+      : null;
+    const movement = bodyLanguage ? bodyLanguage.stats.headMovement : answer.movementScore || null;
     if (eyeContact !== null) {
       totalEyeContact += eyeContact;
       eyeContactCount++;
@@ -386,8 +474,17 @@ export async function generateFeedbackReport(track: string, session: any): Promi
       speakingPace: pace,
       eyeContactPercent: eyeContact,
       movementScore: movement,
+      bodyLanguage: bodyLanguage
+        ? { scores: bodyLanguage.scores, stats: bodyLanguage.stats, insights: bodyLanguage.insights.slice(0, 4), moments: bodyLanguage.moments }
+        : null,
     };
   });
+
+  const sessionTally = mergeTallies(sessionTallies);
+  const readingInQuestions = perAnswerMetrics
+    .map((m, i) => (m.bodyLanguage?.stats.readingDetected ? i + 1 : null))
+    .filter((q): q is number => q !== null);
+  const bodyLanguageReport = sessionTally ? scoreBodyLanguage(sessionTally, { readingInQuestions }) : null;
 
   const avgPace = paceCount > 0 ? Math.round(totalPace / paceCount) : 0;
 
@@ -411,8 +508,16 @@ export async function generateFeedbackReport(track: string, session: any): Promi
     const fullTranscript = perAnswerMetrics
       .map((m, i) => {
         const detail = session.questionDetails?.[i] || {};
-        const frameworkName = detail.framework || (track === "communication-builder" ? "Communication Framework" : isIelts ? `IELTS Part ${detail.part || (i < 2 ? 1 : i === 2 ? 2 : 3)}` : "STAR Framework");
-        return `Q${i + 1} (${frameworkName}): ${m.questionText}\nCandidate Answer: ${m.answerTranscript}\n(Filler Words: ${m.fillerWordCount}, Pace: ${m.speakingPace} WPM)${
+        const ieltsKind = detail.kind === "cue-card" ? " cue card" : detail.kind === "rounding-off" ? " rounding-off question" : "";
+        const frameworkName = isIelts
+          ? `IELTS Part ${detail.part || (i < 2 ? 1 : i === 2 ? 2 : 3)}${ieltsKind}${detail.topic ? `, ${detail.topic}` : ""}`
+          : detail.framework || (track === "communication-builder" ? "Communication Framework" : "STAR Framework");
+        const intent = detail.competency
+          ? `\nCompetency: ${detail.competency}${detail.lookFor?.length ? `\nLook for: ${detail.lookFor.join("; ")}` : ""}`
+          : "";
+        const label = track === "mock-interview" ? detail.stage || frameworkName : frameworkName;
+        const blLine = m.bodyLanguage ? `\n${summarizeForPrompt(m.bodyLanguage as any)}` : "";
+        return `Q${i + 1} (${label}): ${m.questionText}${intent}${blLine}\nCandidate Answer: ${m.answerTranscript}\n(Filler Words: ${m.fillerWordCount}, Pace: ${m.speakingPace} WPM)${
           m.followUpText
             ? `\nFollow-up: ${m.followUpText}\nFollow-up Answer: ${m.followUpTranscript || "(not answered)"}`
             : ""
@@ -420,9 +525,20 @@ export async function generateFeedbackReport(track: string, session: any): Promi
       })
       .join("\n\n---\n\n");
 
-    const feedbackContext = `JOB DESCRIPTION:\n${session.jobDescription || "N/A"}\n\nRESUME:\n${session.resumeText || "N/A"}\n\nFULL TRANSCRIPT:\n${fullTranscript}`;
+    // Role-play tracks need their brief (motion and side, or goal, walk-away and hidden interests) to be judged fairly
+    const first = session.questionDetails?.[0] || {};
+    const trackBrief =
+      track === "debate-practice"
+        ? `DEBATE BRIEF:\nMotion: ${first.motion || "N/A"}\nUser argued: ${first.side || "N/A"} the motion\n\n`
+        : track === "negotiation-practice"
+        ? `NEGOTIATION BRIEF:\nScenario: ${first.scenarioTitle || "N/A"}\nUser's role: ${first.yourRole || "N/A"}\nSituation: ${first.situation || "N/A"}\nUser's goal: ${first.yourGoal || "N/A"}\nUser's walk-away point: ${first.yourWalkAway || "N/A"}\nCounterpart: ${first.counterpart || "N/A"}\nCounterpart's hidden interests: ${(first.counterpartInterests || []).join(" | ")}\nCounterpart's real flexibility: ${first.counterpartFlexibility || "N/A"}\n\n`
+        : "";
+    const feedbackContext = `${trackBrief}JOB DESCRIPTION:\n${session.jobDescription || "N/A"}\n\nRESUME:\n${session.resumeText || "N/A"}\n\nFULL TRANSCRIPT:\n${fullTranscript}`;
 
     const numAnswers = answers.length;
+    const bodyLanguageNote = bodyLanguageReport
+      ? `\n\nSome answers include a "Body language" line measured from the webcam (eye contact, look-aways, reading from notes, blinking, posture, face touching). Mention body language in whatToImprove only when it is a notable problem for that answer, and include one sentence about the candidate's overall body language and eye contact in the overallSummary.`
+      : "";
     const feedbackUserPrompt = isIelts
       ? `You are an IELTS Speaking examiner. Evaluate EACH answer using the 4 official IELTS criteria. Assign REAL, differentiated band scores (1.0–9.0, half bands allowed: 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0). DO NOT default all fields to 6.5 — give honest scores that reflect actual response quality. Short, weak, or repetitive answers should score 4.0–5.5. Fluent, well-structured answers may score 7.0–8.5. Compute overallBand per answer as the arithmetic mean of its 4 criteria, rounded to nearest 0.5. Then compute the top-level "overallBand" as the mean of all individual overallBand values, rounded to nearest 0.5.
 
@@ -444,7 +560,7 @@ Return ONLY a valid JSON object (no markdown, no code fences):
   "overallSummary": "<2-3 sentence holistic examiner comment>"
 }
 
-The perAnswerFeedback array MUST contain exactly ${numAnswers} object(s). Do not include any text outside the JSON.`
+The perAnswerFeedback array MUST contain exactly ${numAnswers} object(s), in transcript order. Keep whatWorked and whatToImprove to one sentence each and rewrittenExample under 50 words. Do not include any text outside the JSON.${bodyLanguageNote}`
       : `Evaluate the interview session transcript above. Return ONLY a valid JSON object matching this schema:
 {
   "perAnswerFeedback": [
@@ -459,7 +575,7 @@ The perAnswerFeedback array MUST contain exactly ${numAnswers} object(s). Do not
   "overallSummary": "..."
 }
 
-The perAnswerFeedback array MUST contain exactly ${numAnswers} entry/entries. Do not include markdown formatting or extraneous text.`;
+The perAnswerFeedback array MUST contain exactly ${numAnswers} entry/entries, in transcript order. Keep whatWorked and whatToImprove to one or two sentences each. Do not include markdown formatting or extraneous text.${bodyLanguageNote}`;
 
     const models = await getAvailableModels(apiKey);
     let rawLlmOutput = "";
@@ -625,8 +741,9 @@ The perAnswerFeedback array MUST contain exactly ${numAnswers} entry/entries. Do
     avgPace,
     overallSummary,
     overallBand: computedOverallBand,
-    avgEyeContactPercent,
-    overallMovementScore,
+    avgEyeContactPercent: bodyLanguageReport ? bodyLanguageReport.stats.eyeContactPercent : avgEyeContactPercent,
+    overallMovementScore: bodyLanguageReport ? bodyLanguageReport.stats.headMovement : overallMovementScore,
+    bodyLanguageReport,
   };
 
   const report = await saveFeedbackReport(sessionId, reportData);
@@ -640,6 +757,7 @@ The perAnswerFeedback array MUST contain exactly ${numAnswers} entry/entries. Do
     overallBand: report.overallBand ?? computedOverallBand,
     avgEyeContactPercent: report.avgEyeContactPercent ?? avgEyeContactPercent,
     overallMovementScore: report.overallMovementScore ?? overallMovementScore,
+    bodyLanguageReport: report.bodyLanguageReport ?? bodyLanguageReport,
   };
 }
 

@@ -27,7 +27,7 @@ export default function IeltsIntroScreen({ onStartPractice }: IeltsIntroScreenPr
       <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md">
         <span className="text-xl shrink-0">⚠️</span>
         <div>
-          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
             Practice Estimate Notice
           </p>
           <p className="text-xs text-amber-800 leading-relaxed mt-0.5">
@@ -50,10 +50,10 @@ export default function IeltsIntroScreen({ onStartPractice }: IeltsIntroScreenPr
                 <span className="w-6 h-6 rounded-lg bg-moss-light/20 border border-moss-light/40 text-moss-deep flex items-center justify-center text-xs font-semibold">1</span>
                 Part 1: Personal & General Questions
               </span>
-              <span className="text-[11px] font-mono text-moss">2 Prompts • Direct Answers</span>
+              <span className="text-[11px] font-mono text-moss">3 Topics • 7 Questions • 4–5 Min</span>
             </div>
             <p className="text-xs text-ink/80 leading-relaxed pl-8">
-              Quick personal questions about familiar topics like work, study, hobbies, or hometown. Speak naturally in 1–3 clear sentences.
+              The examiner introduces themselves, then asks short questions about you: first your work, studies or home, then two everyday topics. Answer naturally in 2–3 sentences and add a reason or example.
             </p>
           </div>
 
@@ -64,10 +64,10 @@ export default function IeltsIntroScreen({ onStartPractice }: IeltsIntroScreenPr
                 <span className="w-6 h-6 rounded-lg bg-tealbird/20 border border-tealbird/40 text-tealbird-deep flex items-center justify-center text-xs font-semibold">2</span>
                 Part 2: Cue Card Long Turn
               </span>
-              <span className="text-[11px] font-mono text-tealbird">1 Topic Card • 1–2 Min Speech</span>
+              <span className="text-[11px] font-mono text-tealbird-deep">1 Min Prep • 1–2 Min Talk</span>
             </div>
             <p className="text-xs text-ink/80 leading-relaxed pl-8">
-              Main cue card prompt with 3–4 bullet points you must cover. You have 1 minute to prepare notes, then deliver a structured long speech.
+              You get a cue card with four points to cover and exactly one minute to prepare (a timer appears). Then speak for one to two minutes. The examiner finishes with one short rounding-off question.
             </p>
           </div>
 
@@ -78,10 +78,10 @@ export default function IeltsIntroScreen({ onStartPractice }: IeltsIntroScreenPr
                 <span className="w-6 h-6 rounded-lg bg-moss-light/20 border border-moss-light/40 text-moss flex items-center justify-center text-xs font-semibold">3</span>
                 Part 3: Two-Way Discussion
               </span>
-              <span className="text-[11px] font-mono text-moss">2 Analytical Follow-ups</span>
+              <span className="text-[11px] font-mono text-moss">2 Themes • 4–6 Questions • 4–5 Min</span>
             </div>
             <p className="text-xs text-ink/80 leading-relaxed pl-8">
-              Broader, abstract discussion questions dynamically linked to your Part 2 topic. Express opinions, analyze trends, and present arguments.
+              A deeper discussion about society, linked to your cue card topic. Give opinions, compare past and present, and speculate about the future. The examiner may ask you to explain or extend an answer.
             </p>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function IeltsIntroScreen({ onStartPractice }: IeltsIntroScreenPr
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-ink">
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-cream/60 border border-line">
-            <span className="text-tealbird">✓</span> Fluency & Coherence
+            <span className="text-tealbird-deep">✓</span> Fluency & Coherence
           </div>
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-cream/60 border border-line">
             <span className="text-moss">✓</span> Lexical Resource
@@ -103,7 +103,7 @@ export default function IeltsIntroScreen({ onStartPractice }: IeltsIntroScreenPr
             <span className="text-moss">✓</span> Grammatical Range
           </div>
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-cream/60 border border-line">
-            <span className="text-amber-600">✓</span> Pronunciation
+            <span className="text-amber-800">✓</span> Pronunciation
           </div>
         </div>
       </div>

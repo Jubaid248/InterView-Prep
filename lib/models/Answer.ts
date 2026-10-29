@@ -14,6 +14,9 @@ export interface IAnswer extends Document {
   // Body language signals (optional — only set when camera was enabled)
   eyeContactPercent?: number | null;
   movementScore?: "low" | "moderate" | "high" | null;
+  // Eye-movement and posture tallies (see lib/bodyLanguage/metrics.ts)
+  bodyLanguage?: Record<string, unknown> | null;
+  followUpBodyLanguage?: Record<string, unknown> | null;
   timestamp: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -34,6 +37,8 @@ const AnswerSchema = new Schema<IAnswer>(
     // Body language signals (optional)
     eyeContactPercent: { type: Number, default: null },
     movementScore: { type: String, enum: ["low", "moderate", "high", null], default: null },
+    bodyLanguage: { type: Schema.Types.Mixed, default: null },
+    followUpBodyLanguage: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true }
 );

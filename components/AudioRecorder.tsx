@@ -602,14 +602,14 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
                 />
               </span>
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink">
-                {isRecording ? "Live Automatic Recording" : "Standby • Floor to You"}
+                {isRecording ? "Recording your answer" : "Your turn"}
               </span>
             </div>
 
             {/* Time Elapsed */}
             <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-cream border border-line font-mono text-xs">
               <span className="text-stone-muted">Duration:</span>
-              <span className={`font-bold ${isRecording ? "text-beak" : "text-stone-muted"}`}>
+              <span className={`font-bold ${isRecording ? "text-beak-deep" : "text-stone-muted"}`}>
                 {formatTime(elapsed)}
               </span>
             </div>
@@ -634,13 +634,13 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
               {/* Listening Status */}
               <p className="text-xs text-ink/80 font-medium text-center">
                 {userHasSpoken
-                  ? "🎙️ Listening... Submits automatically when you finish speaking."
-                  : "🎙️ Microphone is live. Take your time, then speak your response."}
+                  ? "Listening. Tota moves on when you finish speaking."
+                  : "Your mic is on. Take a moment, then start speaking."}
               </p>
             </div>
           ) : (
             <div className="w-full p-4 rounded-2xl bg-cream border border-line flex items-center justify-center text-xs text-stone-muted">
-              Parrot is speaking. Microphone turns on automatically once Parrot finishes.
+              Tota is speaking. Your mic turns on as soon as Tota finishes.
             </div>
           )}
 
@@ -703,13 +703,13 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
                 <span className="text-beak-deep font-mono font-semibold text-lg tabular-nums tracking-widest">
                   {formatTime(elapsed)}
                 </span>
-                <span className="text-[10px] font-semibold uppercase text-beak-deep tracking-widest border-l border-beak/30 pl-3">
-                  Recording • Tap Square To Finish
+                <span className="text-[11px] font-semibold uppercase text-beak-deep tracking-widest border-l border-beak/30 pl-3">
+                  Tap the square when you&apos;re done
                 </span>
               </div>
             ) : (
               <span className="text-xs font-semibold text-ink/80">
-                Tap microphone when ready to speak
+                Tap the mic when you&apos;re ready
               </span>
             )}
           </div>
@@ -739,10 +739,10 @@ const AudioRecorder = forwardRef<AudioRecorderHandle, AudioRecorderProps>(functi
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-moss-light animate-ping" />
               <span className="text-[11px] font-semibold uppercase tracking-widest text-moss-deep">
-                Live Speech Recognition
+                What Tota is hearing
               </span>
             </div>
-            <span className="text-[10px] font-mono text-stone-muted">Transcribing</span>
+            <span className="text-[11px] text-stone-muted">Live transcript</span>
           </div>
           <div className="max-h-28 overflow-y-auto pr-2 text-xs text-ink leading-relaxed italic">
             &ldquo;{liveTranscript}&rdquo;

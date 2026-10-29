@@ -15,7 +15,7 @@ const PILLARS = [
           <span
             key={s}
             className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${
-              i < 3 ? "bg-moss/5 border-moss/20 text-moss" : "bg-beak/5 border-beak/25 text-beak"
+              i < 3 ? "bg-moss/5 border-moss/20 text-moss" : "bg-beak/5 border-beak/25 text-beak-deep"
             }`}
           >
             {i < 3 ? "✓ " : "+ "}
@@ -84,7 +84,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-base sm:text-lg text-stone-muted max-w-md leading-relaxed">
-            Tota asks real interview questions, listens to your answers, and coaches your words, voice and
+            Tota, your AI interviewer, asks real interview questions, listens to your answers, and coaches your words, voice and
             body language, so the real interview feels like a rerun.
           </p>
 
@@ -106,7 +106,7 @@ export default function HomePage() {
           <ul className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-xs text-stone-muted">
             {["Runs in your browser", "Video stays on your device", "Instant scorecard"].map((t) => (
               <li key={t} className="flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-moss-light" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <svg className="w-3.5 h-3.5 text-moss" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clipRule="evenodd" />
                 </svg>
                 {t}
@@ -121,7 +121,7 @@ export default function HomePage() {
       {/* What Tota listens for */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
         <div className="max-w-xl mb-10">
-          <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss-light mb-3">What Tota listens for</p>
+          <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss mb-3">What Tota listens for</p>
           <h2 className="font-serif font-normal text-4xl sm:text-5xl leading-tight">
             Feedback on everything an interviewer notices.
           </h2>
@@ -146,7 +146,7 @@ export default function HomePage() {
       <section id="sample-report" className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
         <div className="rounded-3xl bg-paper border border-line p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
           <div className="lg:col-span-2 space-y-4">
-            <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss-light">Sample report</p>
+            <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss">Sample report</p>
             <h2 className="font-serif font-normal text-4xl leading-tight">See exactly what to fix before it counts.</h2>
             <p className="text-sm text-stone-muted leading-relaxed">
               Every answer gets scored on content, delivery and presence, with a short note on what to try next time.
@@ -193,7 +193,7 @@ export default function HomePage() {
                   <div key={label} className="rounded-xl bg-cream/60 border border-line p-3">
                     <div className="text-[11px] text-stone-muted">{label}</div>
                     <div className="text-lg font-semibold">{value}</div>
-                    <div className="text-[11px] text-moss-light font-medium">{note}</div>
+                    <div className="text-[11px] text-moss font-medium">{note}</div>
                   </div>
                 ))}
               </div>
@@ -207,7 +207,7 @@ export default function HomePage() {
                   <div key={label} className="rounded-xl bg-cream/60 border border-line p-3">
                     <div className="text-[11px] text-stone-muted">{label}</div>
                     <div className="text-lg font-semibold">{value}</div>
-                    <div className={`text-[11px] font-medium ${i === 2 ? "text-beak" : "text-moss-light"}`}>{note}</div>
+                    <div className={`text-[11px] font-medium ${i === 2 ? "text-beak-deep" : "text-moss"}`}>{note}</div>
                   </div>
                 ))}
               </div>
@@ -229,13 +229,13 @@ export default function HomePage() {
       {/* How it works */}
       <section id="how-it-works" className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 scroll-mt-28">
         <div className="max-w-xl mb-10">
-          <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss-light mb-3">How it works</p>
+          <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss mb-3">How it works</p>
           <h2 className="font-serif font-normal text-4xl sm:text-5xl leading-tight">Three steps to your first report.</h2>
         </div>
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-px rounded-2xl overflow-hidden border border-line bg-line">
           {STEPS.map((s) => (
             <li key={s.n} className="bg-paper p-6 sm:p-8 space-y-3">
-              <span className="font-serif text-4xl text-moss-light">{s.n}</span>
+              <span className="font-serif text-4xl text-moss">{s.n}</span>
               <h3 className="text-lg font-semibold">{s.title}</h3>
               <p className="text-sm text-stone-muted leading-relaxed">{s.body}</p>
             </li>

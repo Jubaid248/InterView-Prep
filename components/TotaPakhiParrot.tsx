@@ -50,7 +50,7 @@ export default function PerchedHeroParrot() {
       </div>
 
       {/* Click Hint */}
-      <span className="mt-2 text-[10px] font-mono text-stone-soft group-hover:text-moss transition-colors uppercase tracking-widest font-semibold">
+      <span className="mt-2 text-[11px] font-mono text-stone-soft group-hover:text-moss transition-colors uppercase tracking-widest font-semibold">
         Tap Parrot for interview tips
       </span>
     </div>

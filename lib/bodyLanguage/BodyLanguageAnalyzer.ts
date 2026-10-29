@@ -1,356 +1,546 @@
 /**
  * Body Language Analyzer
  *
- * Runs entirely client-side via MediaPipe Face Landmarker.
- * Computes eye-contact proxy (head yaw) and movement score from the nose-tip landmark.
- * No video or raw landmark data is ever sent to the backend.
+ * Runs entirely client-side with MediaPipe:
+ *  - Face Landmarker (with iris landmarks and blendshapes) for eye gaze, blinks,
+ *    head pose and facial expression
+ *  - Pose Landmarker (lite) for posture, hand gestures and face touching
  *
- * The analyzer manages its own off-screen video element internally — callers do NOT
- * need to pass or manage any video DOM element. Use getStream() to display the feed.
+ * One 15 fps loop analyses the camera continuously. It powers the live overlay
+ * and, while an answer is being recorded, feeds a TallyBuilder. Gaze is judged
+ * relative to a calibration taken in the first seconds (the candidate looking at
+ * the screen), so camera placement doesn't skew results.
+ *
+ * No video or landmark data is ever sent anywhere; only summary counts leave the browser.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import type {
-  FaceLandmarker,
-  FaceLandmarkerOptions,
-  NormalizedLandmark,
-} from "@mediapipe/tasks-vision";
+import type { FaceLandmarker, PoseLandmarker, NormalizedLandmark } from "@mediapipe/tasks-vision";
+import { TallyBuilder, type BodyLanguageTally, type GazeState, type PoseSample } from "@/lib/bodyLanguage/metrics";
 
 export type MovementBucket = "low" | "moderate" | "high";
+export type PostureState = "upright" | "slouch" | "tilt" | "lean-in" | "lean-back";
 
 export interface BodyLanguageMetrics {
-  eyeContactPercent: number; // 0–100, % of frames within ±20° head yaw
-  movementScore: MovementBucket; // "low" | "moderate" | "high"
+  eyeContactPercent: number;
+  movementScore: MovementBucket;
+  /** Full per-answer tally (eye movements, posture, gestures, timed moments). */
+  details: BodyLanguageTally | null;
 }
 
-/** Real-time per-frame result for live overlay feedback in CameraPreview. */
+/** Latest analysed frame, for the live overlay in CameraPreview. */
 export interface LiveFrame {
   faceDetected: boolean;
-  yaw: number;         // head yaw in degrees (negative = left, positive = right)
-  eyeContact: boolean; // true if |yaw| ≤ 20°
-  noseX: number;       // nose tip X position (0–1)
-  noseY: number;       // nose tip Y position (0–1)
+  calibrated: boolean;
+  gaze: GazeState;
+  eyeContact: boolean;
+  posture: PostureState | null;
+  handsVisible: boolean | null;
+  faceTouch: boolean;
+  /** Iris centres and eye corners in normalised video coordinates, for drawing. */
+  irises: { x: number; y: number }[];
+  eyeCorners: { x: number; y: number }[];
+  noseX: number;
+  noseY: number;
+  /** Head yaw relative to calibration, degrees. */
+  yaw: number;
 }
 
-interface SampleFrame {
-  yaw: number;     // head yaw in degrees
-  noseX: number;   // nose-tip X (0–1)
-  noseY: number;   // nose-tip Y (0–1)
-}
-
-// Singleton so we only load the model once per page
-let faceLandmarkerInstance: FaceLandmarker | null = null;
-let loadPromise: Promise<FaceLandmarker> | null = null;
-
-const MODEL_URL =
+const FACE_MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const POSE_MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm";
 
-/**
- * Load (or return cached) the MediaPipe Face Landmarker.
- * All processing is done locally in the browser — nothing is sent to any server.
- */
-async function loadFaceLandmarker(): Promise<FaceLandmarker> {
-  if (faceLandmarkerInstance) return faceLandmarkerInstance;
-  if (loadPromise) return loadPromise;
+const TICK_MS = 66; // ~15 fps for face and eyes
+const POSE_EVERY = 3; // pose at ~5 fps
 
-  loadPromise = (async () => {
-    const { FaceLandmarker: FL, FilesetResolver } = await import(
-      "@mediapipe/tasks-vision"
+// Face mesh indices
+const NOSE_TIP = 4;
+const CHIN = 152;
+const R_EYE_OUTER = 33;
+const R_EYE_INNER = 133;
+const L_EYE_INNER = 362;
+const L_EYE_OUTER = 263;
+const R_IRIS = 468;
+const L_IRIS = 473;
+
+// Pose indices
+const P_NOSE = 0;
+const P_L_SHOULDER = 11;
+const P_R_SHOULDER = 12;
+const P_HAND_POINTS = [15, 16, 19, 20]; // wrists and index fingers
+
+// Gaze thresholds, relative to calibration
+const SIDE_YAW_DEG = 18;
+const SIDE_IRIS = 0.11;
+const PITCH_RATIO = 0.07;
+const EYES_DOWN = 0.28;
+const EYES_UP = 0.3;
+const BLINK_CLOSED = 0.5;
+// Posture thresholds, relative to calibration
+const TILT_DEG = 7;
+const SLOUCH_RATIO = 0.8;
+const LEAN_IN_RATIO = 1.18;
+const LEAN_BACK_RATIO = 0.85;
+const GESTURE_MOVE = 0.025;
+
+const CALIBRATION_FRAMES = 30;
+const POSE_CALIBRATION_FRAMES = 10;
+
+let facePromise: Promise<FaceLandmarker> | null = null;
+let posePromise: Promise<PoseLandmarker | null> | null = null;
+
+async function createWithFallback<T>(create: (delegate: "GPU" | "CPU") => Promise<T>): Promise<T> {
+  try {
+    return await create("GPU");
+  } catch {
+    return await create("CPU");
+  }
+}
+
+function loadFaceLandmarker(): Promise<FaceLandmarker> {
+  facePromise ??= (async () => {
+    const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+    const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+    return createWithFallback((delegate) =>
+      FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: FACE_MODEL_URL, delegate },
+        outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: true,
+        runningMode: "VIDEO",
+        numFaces: 1,
+      })
     );
-
-    const filesetResolver = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-    );
-
-    const options: FaceLandmarkerOptions = {
-      baseOptions: {
-        modelAssetPath: MODEL_URL,
-        delegate: "GPU",
-      },
-      outputFaceBlendshapes: false,
-      outputFacialTransformationMatrixes: true, // needed for head rotation
-      runningMode: "VIDEO",
-      numFaces: 1,
-    };
-
-    const fl = await FL.createFromOptions(filesetResolver, options);
-    faceLandmarkerInstance = fl;
-    return fl;
   })();
-
-  return loadPromise;
+  return facePromise;
 }
 
-// MediaPipe face mesh nose-tip index
-const NOSE_TIP_IDX = 4;
-
-/**
- * Extract yaw angle (horizontal head rotation) from the transformation matrix.
- */
-function extractYawDegrees(matrix: number[]): number {
-  if (!matrix || matrix.length < 16) return 0;
-  const r00 = matrix[0];
-  const r20 = matrix[8];
-  const yaw = Math.atan2(r20, r00) * (180 / Math.PI);
-  return yaw;
+// Pose is optional: if it fails to load, eye tracking still works
+function loadPoseLandmarker(): Promise<PoseLandmarker | null> {
+  posePromise ??= (async () => {
+    try {
+      const { PoseLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+      const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+      return await createWithFallback((delegate) =>
+        PoseLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate },
+          runningMode: "VIDEO",
+          numPoses: 1,
+        })
+      );
+    } catch (err) {
+      console.warn("[BodyLanguageAnalyzer] Pose model unavailable, posture tracking disabled:", err);
+      return null;
+    }
+  })();
+  return posePromise;
 }
 
-const EYE_CONTACT_YAW_THRESHOLD_DEG = 20;
-const MOVEMENT_MODERATE_THRESHOLD = 0.004;
-const MOVEMENT_HIGH_THRESHOLD = 0.01;
+const median = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  return s.length ? s[Math.floor(s.length / 2)] : 0;
+};
 
-/**
- * Analyze a batch of sampled video frames.
- * Returns eyeContactPercent and movementScore.
- * This function never transmits any raw video or landmark data.
- */
-export function computeBodyLanguageMetrics(frames: SampleFrame[]): BodyLanguageMetrics {
-  if (frames.length === 0) {
-    return { eyeContactPercent: 0, movementScore: "low" };
-  }
-
-  const eyeContactFrames = frames.filter(
-    (f) => Math.abs(f.yaw) <= EYE_CONTACT_YAW_THRESHOLD_DEG
-  ).length;
-  const eyeContactPercent = Math.round((eyeContactFrames / frames.length) * 100);
-
-  let totalDisplacement = 0;
-  for (let i = 1; i < frames.length; i++) {
-    const dx = frames[i].noseX - frames[i - 1].noseX;
-    const dy = frames[i].noseY - frames[i - 1].noseY;
-    totalDisplacement += Math.sqrt(dx * dx + dy * dy);
-  }
-  const avgDisplacement = frames.length > 1 ? totalDisplacement / (frames.length - 1) : 0;
-
-  let movementScore: MovementBucket;
-  if (avgDisplacement < MOVEMENT_MODERATE_THRESHOLD) {
-    movementScore = "low";
-  } else if (avgDisplacement < MOVEMENT_HIGH_THRESHOLD) {
-    movementScore = "moderate";
-  } else {
-    movementScore = "high";
-  }
-
-  return { eyeContactPercent, movementScore };
+function yawFromMatrix(result: any): number | null {
+  const mat = result.facialTransformationMatrixes?.[0];
+  const raw = mat?.data || mat;
+  if (!raw || !(Array.isArray(raw) || ArrayBuffer.isView(raw))) return null;
+  const m = Array.from(raw as ArrayLike<number>);
+  if (m.length < 16) return null;
+  return Math.atan2(m[8], m[0]) * (180 / Math.PI);
 }
 
-/**
- * BodyLanguageAnalyzer manages its own off-screen video element internally.
- * Callers do NOT need to create or pass any video element.
- * Call getStream() to get the MediaStream for display purposes (e.g. CameraPreview).
- * All analysis is local — no video data is ever uploaded.
- */
+function blendshapeMap(result: any): Record<string, number> {
+  const cats = result.faceBlendshapes?.[0]?.categories || [];
+  const map: Record<string, number> = {};
+  for (const c of cats) map[c.categoryName] = c.score;
+  return map;
+}
+
+/** Iris position across the eye opening: 0 = image-left corner, 1 = image-right corner. */
+function irisRatio(iris: NormalizedLandmark, a: NormalizedLandmark, b: NormalizedLandmark): number {
+  const left = Math.min(a.x, b.x);
+  const width = Math.abs(a.x - b.x);
+  return width > 1e-4 ? (iris.x - left) / width : 0.5;
+}
+
+interface FaceFeatures {
+  yaw: number;
+  noseRatio: number;
+  gazeH: number;
+  gazeV: number;
+  lookDown: number;
+  blink: number;
+  smile: number;
+  frown: number;
+  nose: { x: number; y: number };
+  iod: number;
+  box: { minX: number; maxX: number; minY: number; maxY: number };
+  irises: { x: number; y: number }[];
+  eyeCorners: { x: number; y: number }[];
+}
+
+function extractFace(result: any): FaceFeatures | null {
+  const lm: NormalizedLandmark[] | undefined = result?.faceLandmarks?.[0];
+  if (!lm || lm.length < 474) return null;
+  const bs = blendshapeMap(result);
+  const g = (k: string) => bs[k] ?? 0;
+
+  const nose = lm[NOSE_TIP];
+  const eyeMidY = (lm[R_EYE_OUTER].y + lm[L_EYE_OUTER].y) / 2;
+  const chinDist = lm[CHIN].y - eyeMidY;
+  const noseRatio = chinDist > 1e-4 ? (nose.y - eyeMidY) / chinDist : 0.4;
+
+  const gazeH =
+    (irisRatio(lm[R_IRIS], lm[R_EYE_OUTER], lm[R_EYE_INNER]) + irisRatio(lm[L_IRIS], lm[L_EYE_INNER], lm[L_EYE_OUTER])) / 2;
+  const lookDown = (g("eyeLookDownLeft") + g("eyeLookDownRight")) / 2;
+  const lookUp = (g("eyeLookUpLeft") + g("eyeLookUpRight")) / 2;
+
+  let yaw = yawFromMatrix(result);
+  if (yaw === null) {
+    // Fallback: nose offset between the outer eye corners
+    const midX = (lm[R_EYE_OUTER].x + lm[L_EYE_OUTER].x) / 2;
+    const half = Math.abs(lm[L_EYE_OUTER].x - lm[R_EYE_OUTER].x) / 2;
+    yaw = half > 0.01 ? ((nose.x - midX) / half) * 45 : 0;
+  }
+
+  let minX = 1, maxX = 0, minY = 1, maxY = 0;
+  for (const p of lm) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+
+  return {
+    yaw,
+    noseRatio,
+    gazeH,
+    gazeV: lookUp - lookDown,
+    lookDown,
+    blink: (g("eyeBlinkLeft") + g("eyeBlinkRight")) / 2,
+    smile: (g("mouthSmileLeft") + g("mouthSmileRight")) / 2,
+    frown: (g("browDownLeft") + g("browDownRight")) / 2,
+    nose: { x: nose.x, y: nose.y },
+    iod: Math.hypot(lm[L_IRIS].x - lm[R_IRIS].x, lm[L_IRIS].y - lm[R_IRIS].y),
+    box: { minX, maxX, minY, maxY },
+    irises: [lm[R_IRIS], lm[L_IRIS]].map((p) => ({ x: p.x, y: p.y })),
+    eyeCorners: [R_EYE_OUTER, R_EYE_INNER, L_EYE_INNER, L_EYE_OUTER].map((i) => ({ x: lm[i].x, y: lm[i].y })),
+  };
+}
+
 export class BodyLanguageAnalyzer {
   private videoEl: HTMLVideoElement | null = null;
   private stream: MediaStream | null = null;
-  private landmarker: FaceLandmarker | null = null;
-  private sampledFrames: SampleFrame[] = [];
-  private samplingInterval: ReturnType<typeof setInterval> | null = null;
-  private lastTimestamp = 0;
-  private isRunning = false;
+  private face: FaceLandmarker | null = null;
+  private pose: PoseLandmarker | null = null;
+  private loop: ReturnType<typeof setInterval> | null = null;
+  private tick = 0;
+  private lastFaceTs = 0;
+  private lastPoseTs = 0;
 
-  /**
-   * Initialize: requests camera permission, creates an internal off-screen video element,
-   * and loads the Face Landmarker model. Throws if camera permission is denied.
-   */
+  // Calibration: the candidate's neutral "looking at the screen" position
+  private calib = { yaw: [] as number[], noseRatio: [] as number[], gazeH: [] as number[], gazeV: [] as number[] };
+  private base: { yaw: number; noseRatio: number; gazeH: number; gazeV: number } | null = null;
+  private poseCalib = { neck: [] as number[], width: [] as number[] };
+  private poseBase: { neck: number; width: number } | null = null;
+
+  private lastNose: { x: number; y: number } | null = null;
+  private lastWrists: ({ x: number; y: number } | null)[] = [null, null];
+  private lastFaceBox: FaceFeatures["box"] | null = null;
+  private latestPose: PoseSample | null = null;
+  private live: LiveFrame | null = null;
+
+  private recorder: TallyBuilder | null = null;
+  private recordStart = 0;
+
+  /** Requests the camera, loads the models and starts the analysis loop. */
   async init(): Promise<void> {
-    // Request camera stream (video only — audio captured separately by AudioRecorder)
     this.stream = await navigator.mediaDevices.getUserMedia({
       video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
       audio: false,
     });
 
-    // Create an off-screen video element. We position it outside the viewport
-    // rather than display:none — browsers refuse to play video on hidden elements.
+    // Off-screen but "visible" to the browser engine; display:none would stop playback
     const video = document.createElement("video");
     video.setAttribute("playsinline", "true");
-    video.setAttribute("muted", "true");
     video.muted = true;
     video.autoplay = true;
-    // Position off-screen but still "visible" to the browser engine
-    video.style.cssText =
-      "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;pointer-events:none;opacity:0;";
+    video.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;pointer-events:none;opacity:0;";
     document.body.appendChild(video);
+    video.srcObject = this.stream;
     this.videoEl = video;
 
-    video.srcObject = this.stream;
-
-    // Wait for the video to be ready to play
     await new Promise<void>((resolve) => {
-      if (video.readyState >= 2) {
-        video.play().then(resolve).catch(resolve);
-        return;
-      }
-      video.onloadeddata = () => {
-        video.play().then(resolve).catch(resolve);
-      };
-      // Safety timeout — don't block forever
+      if (video.readyState >= 2) return void video.play().then(resolve).catch(resolve);
+      video.onloadeddata = () => void video.play().then(resolve).catch(resolve);
       setTimeout(resolve, 5000);
     });
 
-    // Load Face Landmarker (cached singleton after first load)
-    this.landmarker = await loadFaceLandmarker();
+    const [face, pose] = await Promise.all([loadFaceLandmarker(), loadPoseLandmarker()]);
+    this.face = face;
+    this.pose = pose;
+    this.loop = setInterval(() => this.step(), TICK_MS);
+    // Dev only: lets the raw signals be inspected from the console while tuning thresholds
+    if (process.env.NODE_ENV !== "production") (window as any).__bodyLanguage = this;
   }
 
-  /** Returns the active MediaStream — use this to display the camera feed in a <video> element. */
+  /** Dev/tuning: raw features of the latest frame and the calibration baseline. */
+  debug: { features: Omit<FaceFeatures, "box" | "irises" | "eyeCorners"> | null; base: unknown; poseBase: unknown } = {
+    features: null,
+    base: null,
+    poseBase: null,
+  };
+
   getStream(): MediaStream | null {
     return this.stream;
   }
 
-  /**
-   * Run face detection on the current video frame and return live feedback data.
-   * Used by CameraPreview to display real-time eye contact / movement overlays.
-   * Returns null if the landmarker is not ready or no face is detected.
-   */
+  /** Latest analysed frame for the live overlay (no extra detection work). */
+  getLiveFrame(): LiveFrame | null {
+    return this.live;
+  }
+
+  /** @deprecated Use getLiveFrame(); kept so older callers keep working. */
   detectLiveFrame(): LiveFrame | null {
-    if (!this.videoEl || !this.landmarker) return null;
-    if (this.videoEl.readyState < 2) return null;
-
-    const timestamp = performance.now();
-    try {
-      const result = this.landmarker.detectForVideo(this.videoEl, timestamp);
-      if (!result?.faceLandmarks?.length) {
-        return { faceDetected: false, yaw: 0, eyeContact: false, noseX: 0.5, noseY: 0.5 };
-      }
-
-      const landmarks = result.faceLandmarks[0];
-      const noseTip = landmarks[NOSE_TIP_IDX];
-
-      let yaw = 0;
-      let hasMatrix = false;
-      if (result.facialTransformationMatrixes?.length) {
-        const mat = result.facialTransformationMatrixes[0];
-        const raw = (mat as any)?.data || mat;
-        if (raw && (Array.isArray(raw) || ArrayBuffer.isView(raw))) {
-          yaw = extractYawDegrees(Array.from(raw as unknown as number[]));
-          hasMatrix = true;
-        }
-      }
-
-      if (!hasMatrix && landmarks[33] && landmarks[263]) {
-        const leftX = landmarks[33].x;
-        const rightX = landmarks[263].x;
-        const dist = Math.abs(rightX - leftX);
-        if (dist > 0.02) {
-          const midX = (leftX + rightX) / 2;
-          yaw = ((noseTip.x - midX) / (dist / 2)) * 45;
-        }
-      }
-
-      return {
-        faceDetected: true,
-        yaw,
-        eyeContact: Math.abs(yaw) <= EYE_CONTACT_YAW_THRESHOLD_DEG,
-        noseX: noseTip.x,
-        noseY: noseTip.y,
-      };
-    } catch {
-      return null;
-    }
+    return this.live;
   }
 
-  /** Start sampling frames. Call when the user begins recording their answer. */
+  isCalibrated(): boolean {
+    return this.base !== null;
+  }
+
+  /** Start recording metrics for an answer. */
   startSampling(): void {
-    if (this.isRunning) return;
-    this.isRunning = true;
-    this.sampledFrames = [];
-    this.lastTimestamp = 0;
-
-    // ~2 fps — sufficient for head pose estimation without performance impact
-    this.samplingInterval = setInterval(() => {
-      this.sampleFrame();
-    }, 500);
+    this.recorder = new TallyBuilder();
+    this.recordStart = performance.now();
   }
 
-  /** Stop sampling and return computed metrics. Call when the user stops recording. */
+  /** Stop recording and return the answer's metrics. */
   stopSampling(): BodyLanguageMetrics {
-    this.isRunning = false;
-    if (this.samplingInterval) {
-      clearInterval(this.samplingInterval);
-      this.samplingInterval = null;
-    }
-    return computeBodyLanguageMetrics(this.sampledFrames);
+    const tally = this.recorder?.finish() ?? null;
+    this.recorder = null;
+    if (!tally || tally.samples === 0) return { eyeContactPercent: 0, movementScore: "low", details: null };
+
+    const open = Math.max(1, tally.faceFrames - tally.closedFrames);
+    const avgMove = tally.faceFrames ? tally.moveSum / tally.faceFrames : 0;
+    return {
+      eyeContactPercent: Math.round((tally.contactFrames / open) * 100),
+      movementScore: avgMove < 0.025 ? "low" : avgMove < 0.06 ? "moderate" : "high",
+      details: tally,
+    };
   }
 
-  /** Release all resources: stop stream tracks and remove the internal video element. */
   stop(): void {
-    this.isRunning = false;
-    if (this.samplingInterval) {
-      clearInterval(this.samplingInterval);
-      this.samplingInterval = null;
-    }
-    if (this.stream) {
-      this.stream.getTracks().forEach((t) => t.stop());
-      this.stream = null;
-    }
+    if (this.loop) clearInterval(this.loop);
+    this.loop = null;
+    this.recorder = null;
+    this.stream?.getTracks().forEach((t) => t.stop());
+    this.stream = null;
     if (this.videoEl) {
       this.videoEl.srcObject = null;
-      if (this.videoEl.parentNode) {
-        this.videoEl.parentNode.removeChild(this.videoEl);
-      }
+      this.videoEl.remove();
       this.videoEl = null;
     }
   }
 
-  private sampleFrame(): void {
-    if (!this.videoEl || !this.landmarker || !this.isRunning) return;
-    if (this.videoEl.readyState < 2) return;
+  private step(): void {
+    const video = this.videoEl;
+    if (!video || !this.face || video.readyState < 2) return;
+    this.tick++;
 
-    const timestamp = performance.now();
-    if (timestamp === this.lastTimestamp) return;
-    this.lastTimestamp = timestamp;
+    const now = performance.now();
+    if (this.tick % POSE_EVERY === 0) this.runPose(video, now);
 
+    let result: any;
     try {
-      const result = this.landmarker.detectForVideo(this.videoEl, timestamp);
-
-      if (
-        !result ||
-        !result.faceLandmarks ||
-        result.faceLandmarks.length === 0
-      ) {
-        return; // No face detected — skip without penalizing
-      }
-
-      const landmarks: NormalizedLandmark[] = result.faceLandmarks[0];
-      const noseTip = landmarks[NOSE_TIP_IDX];
-
-      // Extract yaw from facial transformation matrix
-      let yaw = 0;
-      let hasMatrixYaw = false;
-      if (
-        result.facialTransformationMatrixes &&
-        result.facialTransformationMatrixes.length > 0
-      ) {
-        const mat = result.facialTransformationMatrixes[0];
-        const raw = (mat as any)?.data || mat;
-        if (raw && (Array.isArray(raw) || ArrayBuffer.isView(raw))) {
-          yaw = extractYawDegrees(Array.from(raw as unknown as number[]));
-          hasMatrixYaw = true;
-        }
-      }
-
-      // Fallback: estimate yaw from eye-nose geometry if matrix unavailable
-      if (!hasMatrixYaw && landmarks[33] && landmarks[263] && noseTip) {
-        const leftEyeX = landmarks[33].x;
-        const rightEyeX = landmarks[263].x;
-        const eyeDist = Math.abs(rightEyeX - leftEyeX);
-        if (eyeDist > 0.02) {
-          const eyeMidX = (leftEyeX + rightEyeX) / 2;
-          const ratio = (noseTip.x - eyeMidX) / (eyeDist / 2);
-          yaw = ratio * 45;
-        }
-      }
-
-      this.sampledFrames.push({
-        yaw,
-        noseX: noseTip.x,
-        noseY: noseTip.y,
-      });
+      const ts = Math.max(now, this.lastFaceTs + 1);
+      this.lastFaceTs = ts;
+      result = this.face.detectForVideo(video, ts);
     } catch (err) {
-      // Silently skip frames with errors (e.g., GPU context loss)
-      console.warn("[BodyLanguageAnalyzer] Frame sampling error:", err);
+      console.warn("[BodyLanguageAnalyzer] Face detection error:", err);
+      return;
     }
+
+    const f = extractFace(result);
+    const t = (now - this.recordStart) / 1000;
+
+    if (!f) {
+      this.lastNose = null;
+      this.lastFaceBox = null;
+      this.live = {
+        faceDetected: false,
+        calibrated: this.base !== null,
+        gaze: "absent",
+        eyeContact: false,
+        posture: this.postureState(),
+        handsVisible: this.latestPose?.handsVisible ?? null,
+        faceTouch: false,
+        irises: [],
+        eyeCorners: [],
+        noseX: 0.5,
+        noseY: 0.5,
+        yaw: 0,
+      };
+      this.recorder?.add({ t, gaze: "absent", gazeH: 0, blink: 0, headMove: 0, smile: 0, frown: 0, pose: this.takePose() });
+      return;
+    }
+
+    this.lastFaceBox = f.box;
+    this.calibrate(f);
+    this.debug = {
+      features: { yaw: f.yaw, noseRatio: f.noseRatio, gazeH: f.gazeH, gazeV: f.gazeV, lookDown: f.lookDown, blink: f.blink, smile: f.smile, frown: f.frown, nose: f.nose, iod: f.iod },
+      base: this.base,
+      poseBase: this.poseBase,
+    };
+    const gaze = this.classifyGaze(f);
+    const headMove = this.lastNose && f.iod > 0 ? Math.hypot(f.nose.x - this.lastNose.x, f.nose.y - this.lastNose.y) / f.iod : 0;
+    this.lastNose = f.nose;
+    const yawDev = f.yaw - (this.base?.yaw ?? 0);
+
+    this.live = {
+      faceDetected: true,
+      calibrated: this.base !== null,
+      gaze,
+      eyeContact: gaze === "contact" || gaze === "closed",
+      posture: this.postureState(),
+      handsVisible: this.latestPose?.handsVisible ?? null,
+      faceTouch: this.latestPose?.faceTouch ?? false,
+      irises: f.irises,
+      eyeCorners: f.eyeCorners,
+      noseX: f.nose.x,
+      noseY: f.nose.y,
+      yaw: yawDev,
+    };
+
+    this.recorder?.add({
+      t,
+      gaze,
+      gazeH: f.gazeH - (this.base?.gazeH ?? 0.5),
+      blink: f.blink,
+      headMove,
+      smile: f.smile,
+      frown: f.frown,
+      pose: this.takePose(),
+    });
+  }
+
+  private calibrate(f: FaceFeatures): void {
+    if (this.base || f.blink > 0.4 || Math.abs(f.yaw) > 25 || f.lookDown > 0.45) return;
+    const c = this.calib;
+    c.yaw.push(f.yaw);
+    c.noseRatio.push(f.noseRatio);
+    c.gazeH.push(f.gazeH);
+    c.gazeV.push(f.gazeV);
+    if (c.yaw.length >= CALIBRATION_FRAMES) {
+      this.base = { yaw: median(c.yaw), noseRatio: median(c.noseRatio), gazeH: median(c.gazeH), gazeV: median(c.gazeV) };
+    }
+  }
+
+  private classifyGaze(f: FaceFeatures): GazeState {
+    const base = this.base ?? { yaw: 0, noseRatio: f.noseRatio, gazeH: 0.5, gazeV: 0 };
+    const pitch = f.noseRatio - base.noseRatio; // positive = head tipped down
+    const eyesV = f.gazeV - base.gazeV; // negative = eyes looking down
+
+    const lookingDown = pitch > PITCH_RATIO || eyesV < -EYES_DOWN;
+    // Lowered eyelids when looking down register as a half-blink; don't call that "closed"
+    if (f.blink >= BLINK_CLOSED && !(lookingDown && f.lookDown > 0.4)) return "closed";
+    if (lookingDown) return "down";
+    if (pitch < -PITCH_RATIO || eyesV > EYES_UP) return "up";
+    if (Math.abs(f.yaw - base.yaw) > SIDE_YAW_DEG || Math.abs(f.gazeH - base.gazeH) > SIDE_IRIS) return "side";
+    return "contact";
+  }
+
+  private runPose(video: HTMLVideoElement, now: number): void {
+    if (!this.pose) return;
+    let lm: NormalizedLandmark[] | undefined;
+    try {
+      const ts = Math.max(now, this.lastPoseTs + 1);
+      this.lastPoseTs = ts;
+      lm = this.pose.detectForVideo(video, ts)?.landmarks?.[0];
+    } catch {
+      return;
+    }
+    const vis = (p?: NormalizedLandmark) => (p?.visibility ?? 0) > 0.6;
+    if (!lm || !vis(lm[P_L_SHOULDER]) || !vis(lm[P_R_SHOULDER])) {
+      this.latestPose = null;
+      return;
+    }
+
+    const ls = lm[P_L_SHOULDER];
+    const rs = lm[P_R_SHOULDER];
+    const width = Math.abs(ls.x - rs.x);
+    if (width < 0.05) {
+      this.latestPose = null;
+      return;
+    }
+    const tiltDeg = Math.abs(Math.atan2(ls.y - rs.y, Math.abs(ls.x - rs.x)) * (180 / Math.PI));
+    const neck = ((ls.y + rs.y) / 2 - lm[P_NOSE].y) / width;
+
+    if (!this.poseBase && tiltDeg < TILT_DEG) {
+      this.poseCalib.neck.push(neck);
+      this.poseCalib.width.push(width);
+      if (this.poseCalib.neck.length >= POSE_CALIBRATION_FRAMES) {
+        this.poseBase = { neck: median(this.poseCalib.neck), width: median(this.poseCalib.width) };
+      }
+    }
+
+    const widthRatio = this.poseBase ? width / this.poseBase.width : 1;
+    const leanIn = widthRatio > LEAN_IN_RATIO;
+    const leanBack = widthRatio < LEAN_BACK_RATIO;
+    const slouch = !!this.poseBase && !leanIn && neck < this.poseBase.neck * SLOUCH_RATIO;
+    const tilt = tiltDeg > TILT_DEG;
+
+    // Hands: wrists in view, moving between samples = gesturing, inside the face box = touching
+    const wrists = [lm[15], lm[16]].map((p) => (p && (p.visibility ?? 0) > 0.5 && p.y < 1 ? { x: p.x, y: p.y } : null));
+    const handsVisible = wrists.some(Boolean);
+    const gesturing = wrists.some((w, i) => {
+      const prev = this.lastWrists[i];
+      return !!w && !!prev && Math.hypot(w.x - prev.x, w.y - prev.y) > GESTURE_MOVE;
+    });
+    this.lastWrists = wrists;
+
+    let faceTouch = false;
+    const box = this.lastFaceBox;
+    if (box) {
+      const padX = (box.maxX - box.minX) * 0.2;
+      const padY = (box.maxY - box.minY) * 0.2;
+      faceTouch = P_HAND_POINTS.some((i) => {
+        const p = lm![i];
+        return (
+          p &&
+          (p.visibility ?? 0) > 0.5 &&
+          p.x > box.minX - padX &&
+          p.x < box.maxX + padX &&
+          p.y > box.minY - padY &&
+          p.y < box.maxY + padY
+        );
+      });
+    }
+
+    this.latestPose = { upright: !slouch && !tilt, slouch, tilt, leanIn, leanBack, handsVisible, gesturing, faceTouch };
+    this.poseFresh = true;
+  }
+
+  private poseFresh = false;
+
+  /** Hands the newest pose sample to the recorder once, so pose frames aren't double-counted. */
+  private takePose(): PoseSample | null {
+    if (!this.poseFresh) return null;
+    this.poseFresh = false;
+    return this.latestPose;
+  }
+
+  private postureState(): PostureState | null {
+    const p = this.latestPose;
+    if (!p) return null;
+    if (p.slouch) return "slouch";
+    if (p.leanIn) return "lean-in";
+    if (p.leanBack) return "lean-back";
+    if (p.tilt) return "tilt";
+    return "upright";
   }
 }

@@ -118,6 +118,7 @@ export async function createAnswerRecord(data: {
   followUpAudioDuration?: number | null;
   eyeContactPercent?: number | null;
   movementScore?: "low" | "moderate" | "high" | null;
+  bodyLanguage?: Record<string, unknown> | null;
 }): Promise<any> {
   const useMongo = await checkMongoConnection();
   if (useMongo) {
@@ -131,6 +132,8 @@ export async function createAnswerRecord(data: {
       followUpAudioDuration: data.followUpAudioDuration || null,
       eyeContactPercent: data.eyeContactPercent ?? null,
       movementScore: data.movementScore ?? null,
+      bodyLanguage: data.bodyLanguage ?? null,
+      followUpBodyLanguage: null,
       createdAt: new Date(),
     };
     memoryAnswers.push(answer);

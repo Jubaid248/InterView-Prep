@@ -1,66 +1,93 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IPerAnswerFeedback } from "@/lib/models/FeedbackReport";
+import { BodyLanguageAnswerPanel } from "@/components/BodyLanguageReport";
 
 interface FeedbackCardProps {
   feedback: IPerAnswerFeedback;
   questionNumber: number;
   track?: string;
+  /** The question's stored detail: IELTS part/kind/topic, or a method/debate round name. */
+  detail?: { part?: number; kind?: string; topic?: string; framework?: string; stage?: string };
 }
 
-function getIeltsPartLabel(questionNumber: number): { label: string; color: string; bg: string; border: string } {
-  if (questionNumber <= 2) {
+// Older IELTS sessions had no stored part, so fall back to their fixed 5-question layout
+function getIeltsPartLabel(
+  questionNumber: number,
+  detail?: FeedbackCardProps["detail"]
+): { label: string; color: string; bg: string; border: string } {
+  const part = detail?.part ?? (questionNumber <= 2 ? 1 : questionNumber === 3 ? 2 : 3);
+  const topic = detail?.topic ? ` · ${detail.topic}` : "";
+  if (part === 1) {
     return {
-      label: `Part 1 — Personal Q${questionNumber}`,
+      label: `Part 1 — Introduction${topic}`,
       color: "text-moss-deep",
       bg: "bg-moss-light/15",
       border: "border-moss-light/30",
     };
   }
-  if (questionNumber === 3) {
+  if (part === 2) {
     return {
-      label: "Part 2 — Cue Card Long Turn",
+      label: detail?.kind === "rounding-off" ? "Part 2 — Rounding-off question" : "Part 2 — Cue Card Long Turn",
       color: "text-tealbird-deep",
       bg: "bg-tealbird/15",
       border: "border-tealbird/30",
     };
   }
   return {
-    label: `Part 3 — Discussion Q${questionNumber - 3}`,
+    label: `Part 3 — Discussion${topic}`,
     color: "text-moss",
     bg: "bg-moss-light/15",
     border: "border-moss-light/30",
   };
 }
 
+const FRAMEWORK_LABELS: Record<string, string> = {
+  ARE: "Small talk · ARE method",
+  PREP: "PREP method",
+  PPF: "Past–Present–Future",
+};
+
 function bandColor(band: number): string {
   if (band >= 7.5) return "text-moss";
   if (band >= 6.5) return "text-moss";
-  if (band >= 5.5) return "text-amber-600";
-  return "text-beak";
+  if (band >= 5.5) return "text-amber-800";
+  return "text-beak-deep";
 }
 
 export default function FeedbackCard({
   feedback,
   questionNumber,
   track,
+  detail,
 }: FeedbackCardProps) {
   const isIelts = track === "ielts-speaking";
 
   const paceColor =
     feedback.speakingPace > 0 && feedback.speakingPace < 120
-      ? "text-amber-600"
+      ? "text-amber-800"
       : feedback.speakingPace > 160
-        ? "text-beak"
+        ? "text-beak-deep"
         : "text-moss";
 
+  const relevance10 =
+    feedback.relevanceScore > 10 ? Math.round(feedback.relevanceScore / 10) : Math.round(feedback.relevanceScore);
+
   const relevanceColor =
-    feedback.relevanceScore >= 8
+    relevance10 >= 8
       ? "text-moss bg-moss-light/15 border-moss-light/30"
-      : feedback.relevanceScore >= 5
-        ? "text-amber-700 bg-amber-500/15 border-amber-500/30"
+      : relevance10 >= 5
+        ? "text-amber-800 bg-amber-500/15 border-amber-500/30"
         : "text-beak-deep bg-beak/15 border-beak/30";
 
-  const partInfo = isIelts ? getIeltsPartLabel(questionNumber) : null;
+  const partInfo = isIelts ? getIeltsPartLabel(questionNumber, detail) : null;
+  const promptLabel =
+    (track === "debate-practice" || track === "negotiation-practice") && detail?.framework
+      ? detail.framework
+      : track === "communication-builder" && detail?.framework
+      ? FRAMEWORK_LABELS[detail.framework] || `${detail.framework} method`
+      : track === "mock-interview" && detail?.stage
+      ? detail.stage
+      : null;
   const overallBand = typeof feedback.overallBand === "number" ? feedback.overallBand : null;
 
   return (
@@ -71,13 +98,13 @@ export default function FeedbackCard({
           <div className="space-y-1">
             {isIelts && partInfo ? (
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${partInfo.bg} ${partInfo.border} ${partInfo.color}`}>
+                <span className={`text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${partInfo.bg} ${partInfo.border} ${partInfo.color}`}>
                   {partInfo.label}
                 </span>
               </div>
             ) : (
               <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-                Prompt {questionNumber} Feedback
+                {promptLabel ? `${questionNumber}. ${promptLabel}` : `Prompt ${questionNumber} Feedback`}
               </h3>
             )}
             <p className="text-xs text-ink/80 leading-snug font-medium">{feedback.questionText}</p>
@@ -89,12 +116,12 @@ export default function FeedbackCard({
                 <span className={`text-3xl font-semibold leading-none ${bandColor(overallBand)}`}>
                   {overallBand}
                 </span>
-                <span className="text-[10px] font-mono text-tealbird-deep uppercase">Est. Band</span>
+                <span className="text-[11px] text-tealbird-deep">Estimated band</span>
               </div>
             </div>
           ) : !isIelts ? (
             <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${relevanceColor}`}>
-              Relevance: {feedback.relevanceScore}/10
+              Relevance {relevance10}/10
             </span>
           ) : null}
         </div>
@@ -103,8 +130,8 @@ export default function FeedbackCard({
       <div className="p-6 sm:p-8 space-y-6">
         {/* Answer Transcript */}
         <div className="space-y-2">
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-stone-muted">
-            Recorded Answer Transcript
+          <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
+            What you said
           </h4>
           <div className="text-xs sm:text-sm text-ink leading-relaxed bg-cream/60 rounded-2xl p-4 border border-line shadow-inner">
             {highlightFillers(feedback.answerTranscript, feedback.fillerWords)}
@@ -114,8 +141,8 @@ export default function FeedbackCard({
         {/* Follow-up Section */}
         {feedback.followUpText && (
           <div className="space-y-2 pt-2 border-t border-line">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-moss">
-              Follow-up Question & Response
+            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-moss">
+              Follow-up question and your answer
             </h4>
             <p className="text-xs text-moss-deep italic font-medium">
               &ldquo;{feedback.followUpText}&rdquo;
@@ -131,20 +158,20 @@ export default function FeedbackCard({
         {/* Criteria Breakdown */}
         {isIelts ? (
           <div className="space-y-3 pt-2 border-t border-line">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-stone-muted">
-              4 Official Criteria Band Ratings
+            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
+              Band score by criterion
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 { label: "Fluency & Coherence", value: feedback.fluencyCoherence, color: "text-tealbird-deep" },
                 { label: "Lexical Resource", value: feedback.lexicalResource, color: "text-moss-deep" },
-                { label: "Grammar Accuracy", value: feedback.grammaticalRange, color: "text-moss" },
-                { label: "Pronunciation", value: phenomenonToBand(feedback.pronunciation), color: "text-amber-700" },
+                { label: "Grammar", value: feedback.grammaticalRange, color: "text-moss" },
+                { label: "Pronunciation", value: phenomenonToBand(feedback.pronunciation), color: "text-amber-800" },
               ].map(({ label, value }) => {
                 const score = typeof value === "number" ? value : null;
                 return (
                   <div key={label} className="glass-card rounded-2xl p-3 text-center border border-line">
-                    <p className="text-[10px] font-medium text-stone-muted mb-1 leading-tight">{label}</p>
+                    <p className="text-[11px] font-medium text-stone-muted mb-1 leading-tight">{label}</p>
                     <p className={`text-xl font-semibold ${score !== null ? bandColor(score) : "text-stone-soft"}`}>
                       {score !== null ? score : "—"}
                     </p>
@@ -156,21 +183,21 @@ export default function FeedbackCard({
         ) : (
           <div className="grid grid-cols-3 gap-3">
             <div className="glass-card rounded-2xl p-4 text-center border border-line">
-              <p className="text-[10px] font-bold uppercase text-stone-muted mb-1">Filler Words</p>
-              <p className={`text-xl font-semibold ${feedback.fillerWordCount > 3 ? "text-beak" : "text-moss"}`}>
+              <p className="text-[11px] font-bold uppercase text-stone-muted mb-1">Filler words</p>
+              <p className={`text-xl font-semibold ${feedback.fillerWordCount > 3 ? "text-beak-deep" : "text-moss"}`}>
                 {feedback.fillerWordCount}
               </p>
             </div>
             <div className="glass-card rounded-2xl p-4 text-center border border-line">
-              <p className="text-[10px] font-bold uppercase text-stone-muted mb-1">Pace (WPM)</p>
+              <p className="text-[11px] font-bold uppercase text-stone-muted mb-1">Pace (words/min)</p>
               <p className={`text-xl font-semibold ${paceColor}`}>
                 {feedback.speakingPace || "—"}
               </p>
             </div>
             <div className="glass-card rounded-2xl p-4 text-center border border-line">
-              <p className="text-[10px] font-bold uppercase text-stone-muted mb-1">Relevance</p>
-              <p className={`text-xl font-semibold ${feedback.relevanceScore >= 7 ? "text-moss" : "text-amber-600"}`}>
-                {feedback.relevanceScore}/10
+              <p className="text-[11px] font-bold uppercase text-stone-muted mb-1">Relevance</p>
+              <p className={`text-xl font-semibold ${relevance10 >= 7 ? "text-moss" : "text-amber-800"}`}>
+                {relevance10}/10
               </p>
             </div>
           </div>
@@ -179,18 +206,18 @@ export default function FeedbackCard({
         {/* STAR Analysis for Mock Interview */}
         {!isIelts && feedback.starAnalysis && (
           <div className="space-y-3 pt-2 border-t border-line">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-stone-muted">
-              STAR Method Structure Detection
+            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
+              STAR structure
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(["situation", "task", "action", "result"] as const).map((part) => (
                 <div key={part} className="p-3.5 rounded-2xl bg-cream/60 border border-moss-light/20 space-y-1">
-                  <p className="text-[10px] font-semibold text-moss uppercase tracking-wider">
+                  <p className="text-[11px] font-semibold text-moss uppercase tracking-wider">
                     {part}
                   </p>
                   <p className="text-xs text-ink/80 leading-relaxed">
                     {feedback.starAnalysis?.[part] || (
-                      <span className="text-stone-soft italic">Not clearly detected</span>
+                      <span className="text-stone-soft italic">Missing from your answer</span>
                     )}
                   </p>
                 </div>
@@ -199,27 +226,33 @@ export default function FeedbackCard({
           </div>
         )}
 
-        {/* Body Language Feedback (Optional) */}
-        {(typeof feedback.eyeContactPercent === "number" || feedback.movementScore) && (
+        {/* Body language and eye movement for this answer */}
+        {(feedback as any).bodyLanguage && (
+          <div className="space-y-3 pt-4 border-t border-line">
+            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-moss-deep">Body language and eye contact</h4>
+            <BodyLanguageAnswerPanel data={(feedback as any).bodyLanguage} />
+          </div>
+        )}
+        {!(feedback as any).bodyLanguage && (typeof feedback.eyeContactPercent === "number" || feedback.movementScore) && (
           <div className="space-y-3 pt-2 border-t border-line">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-[10px] font-semibold uppercase tracking-widest text-moss-deep flex items-center gap-1.5">
-                <span>📹</span> Body Language Signals
+              <h4 className="text-[11px] font-semibold uppercase tracking-widest text-moss-deep flex items-center gap-1.5">
+                Body language
               </h4>
-              <span className="text-[10px] font-mono text-stone-soft">Local Camera Analysis</span>
+              <span className="text-[11px] text-stone-soft">Measured on your device</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {typeof feedback.eyeContactPercent === "number" && (
                 <div className="glass-card rounded-2xl p-4 border border-line flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold uppercase text-stone-muted">Eye Contact Focus</p>
+                    <p className="text-[11px] font-bold uppercase text-stone-muted">Eye contact</p>
                     <p className="text-xs text-ink/80">
                       {feedback.eyeContactPercent >= 70
                         ? "Great direct camera/screen focus"
                         : feedback.eyeContactPercent >= 50
-                        ? "Moderate screen engagement"
-                        : "Frequently looked away from screen"}
+                        ? "Looked away fairly often"
+                        : "Looked away a lot"}
                     </p>
                   </div>
                   <div className="text-right">
@@ -228,13 +261,13 @@ export default function FeedbackCard({
                         feedback.eyeContactPercent >= 70
                           ? "text-moss"
                           : feedback.eyeContactPercent >= 50
-                          ? "text-amber-600"
-                          : "text-beak"
+                          ? "text-amber-800"
+                          : "text-beak-deep"
                       }`}
                     >
                       {feedback.eyeContactPercent}%
                     </span>
-                    <p className="text-[9px] font-mono text-stone-soft uppercase">Forward Yaw</p>
+                    <p className="text-[11px] font-mono text-stone-soft uppercase">Forward Yaw</p>
                   </div>
                 </div>
               )}
@@ -242,7 +275,7 @@ export default function FeedbackCard({
               {feedback.movementScore && (
                 <div className="glass-card rounded-2xl p-4 border border-line flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold uppercase text-stone-muted">Head Movement & Stability</p>
+                    <p className="text-[11px] font-bold uppercase text-stone-muted">Head movement</p>
                     <p className="text-xs text-ink/80">
                       {feedback.movementScore === "low"
                         ? "Composed and steady posture"
@@ -258,12 +291,12 @@ export default function FeedbackCard({
                           ? "bg-moss-light/15 text-moss border border-moss-light/30"
                           : feedback.movementScore === "moderate"
                           ? "bg-moss-light/15 text-moss-deep border border-moss-light/30"
-                          : "bg-amber-500/15 text-amber-700 border border-amber-500/30"
+                          : "bg-amber-500/15 text-amber-800 border border-amber-500/30"
                       }`}
                     >
                       {feedback.movementScore}
                     </span>
-                    <p className="text-[9px] font-mono text-stone-soft uppercase mt-1">Stability</p>
+                    <p className="text-[11px] font-mono text-stone-soft uppercase mt-1">Stability</p>
                   </div>
                 </div>
               )}
@@ -276,7 +309,7 @@ export default function FeedbackCard({
           {feedback.whatWorked && (
             <div className="p-4 rounded-2xl bg-moss-light/10 border border-moss-light/30 space-y-1 backdrop-blur-md">
               <p className="text-[11px] font-bold text-moss uppercase tracking-wider flex items-center gap-1.5">
-                <span>✓</span> Key Strengths
+                What worked
               </p>
               <p className="text-xs text-ink leading-relaxed">
                 {feedback.whatWorked}
@@ -285,8 +318,8 @@ export default function FeedbackCard({
           )}
           {feedback.whatToImprove && (
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1 backdrop-blur-md">
-              <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-                <span>💡</span> High-Value Improvement
+              <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                What to improve
               </p>
               <p className="text-xs text-ink leading-relaxed">
                 {feedback.whatToImprove}
@@ -298,8 +331,8 @@ export default function FeedbackCard({
         {/* High-Scoring Model Answer */}
         {isIelts && feedback.rewrittenExample ? (
           <div className="space-y-2 pt-2 border-t border-line">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-tealbird flex items-center gap-1">
-              <span>✨</span> Model Band 8+ Native Response Example
+            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-tealbird-deep flex items-center gap-1">
+              A band 8+ version of your answer
             </h4>
             <div className="p-4 rounded-2xl bg-tealbird/10 border border-tealbird/30 text-xs text-ink leading-relaxed italic">
               &ldquo;{feedback.rewrittenExample}&rdquo;
@@ -307,8 +340,8 @@ export default function FeedbackCard({
           </div>
         ) : !isIelts && feedback.suggestions && feedback.suggestions.length > 0 && (
           <div className="space-y-2 pt-2 border-t border-line">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-stone-muted">
-              Specific Actionable Suggestions
+            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
+              Try this next time
             </h4>
             <ul className="space-y-2">
               {feedback.suggestions.map((suggestion, idx) => (

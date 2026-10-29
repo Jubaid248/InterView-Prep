@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import FeedbackCard from "@/components/FeedbackCard";
+import { BodyLanguageReportCard } from "@/components/BodyLanguageReport";
+import { friendlyError, requestErrorFrom } from "@/lib/friendlyError";
 import { IPerAnswerFeedback } from "@/lib/models/FeedbackReport";
 
 interface ReportData {
@@ -12,6 +14,7 @@ interface ReportData {
     jobDescription: string;
     resumeText: string;
     questions: string[];
+    questionDetails?: any[];
     track?: string;
     status: string;
     createdAt: string;
@@ -34,6 +37,7 @@ interface ReportData {
     overallBand?: number;
     avgEyeContactPercent?: number | null;
     overallMovementScore?: "low" | "moderate" | "high" | null;
+    bodyLanguageReport?: any;
   } | null;
 }
 
@@ -50,20 +54,10 @@ export default function ReportPage() {
     const fetchReport = async () => {
       try {
         const res = await fetch(`/api/interview/${sessionId}`);
-        const contentType = res.headers.get("content-type");
-        let result;
-        if (contentType && contentType.includes("application/json")) {
-          result = await res.json();
-        } else {
-          const text = await res.text();
-          throw new Error(`Server error (${res.status}): ${text.slice(0, 150)}`);
-        }
-        if (!res.ok) throw new Error(result.error || "Failed to load report data.");
-        setData(result);
+        if (!res.ok) throw await requestErrorFrom(res);
+        setData(await res.json());
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load report."
-        );
+        setError(friendlyError("load-report", err));
       } finally {
         setLoading(false);
       }
@@ -80,7 +74,7 @@ export default function ReportPage() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <p className="text-ink/80 text-sm font-semibold">Tota is writing your report…</p>
+          <p className="text-ink/80 text-sm font-semibold">Loading your report…</p>
         </div>
       </div>
     );
@@ -90,12 +84,38 @@ export default function ReportPage() {
     return (
       <div className="max-w-lg mx-auto mt-12 px-4">
         <div className="glass-card border border-beak/30 rounded-3xl p-8 text-center space-y-4">
-          <p className="text-beak font-medium">{error || "Report not found."}</p>
+          <p className="text-ink font-medium">{error || "We can't find this report. The practice session may have expired."}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-5 py-2.5 rounded-xl bg-moss hover:bg-moss-deep text-cream text-sm font-semibold transition-colors"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => router.push("/mock-interview")}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-cream border border-line text-ink text-sm font-semibold transition-colors"
+            >
+              Start a new one
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state: the session exists but nothing has been answered yet
+  if (!data.report && data.answers.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto mt-12 px-4">
+        <div className="rounded-3xl bg-paper border border-line p-8 text-center space-y-4">
+          <h1 className="font-serif text-4xl text-ink">No answers yet</h1>
+          <p className="text-sm text-stone-muted">Answer at least one question to get feedback.</p>
           <button
-            onClick={() => router.push("/")}
-            className="text-xs font-bold text-moss hover:text-moss-deep underline"
+            onClick={() => router.push(`/interview/${sessionId}`)}
+            className="px-5 py-2.5 rounded-xl bg-moss hover:bg-moss-deep text-cream text-sm font-semibold transition-colors"
           >
-            Back to home
+            Back to practice
           </button>
         </div>
       </div>
@@ -104,6 +124,9 @@ export default function ReportPage() {
 
   const { report, answers } = data;
   const isIelts = data.session.track === "ielts-speaking";
+  const isDebate = data.session.track === "debate-practice";
+  const isCommBuilder = data.session.track === "communication-builder";
+  const isNegotiation = data.session.track === "negotiation-practice";
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
@@ -122,12 +145,24 @@ export default function ReportPage() {
 
       {/* Title Header */}
       <div className="space-y-3">
-        <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss-light">
-          {isIelts ? "IELTS speaking report" : "Interview report"}
+        <p className="text-xs font-mono uppercase tracking-[0.14em] text-moss">
+          {isIelts
+            ? "IELTS speaking report"
+            : isDebate
+            ? "Debate report"
+            : isNegotiation
+            ? "Negotiation report"
+            : isCommBuilder
+            ? "Communication report"
+            : "Interview report"}
         </p>
         <h1 className="font-serif font-normal text-5xl sm:text-6xl leading-[1.02] text-ink">
           {isIelts ? (
             <>Your speaking, <span className="italic text-moss">scored.</span></>
+          ) : isDebate ? (
+            <>How your case <span className="italic text-moss">held up.</span></>
+          ) : isNegotiation ? (
+            <>How your deal <span className="italic text-moss">came together.</span></>
           ) : (
             <>Here&rsquo;s how <span className="italic text-moss">you did.</span></>
           )}
@@ -135,6 +170,12 @@ export default function ReportPage() {
         <p className="text-base text-stone-muted leading-relaxed max-w-2xl">
           {isIelts
             ? "Comprehensive practice evaluation across Fluency, Lexical Resource, Grammatical Accuracy, and Pronunciation."
+            : isDebate
+            ? `${data.session.questionDetails?.[0]?.motion || ""} Argument structure, evidence, and how well you answered Tota's rebuttal and cross-examination.`
+            : isNegotiation
+            ? `${data.session.questionDetails?.[0]?.scenarioTitle || "Negotiation"}. Your opening, how you handled objections and pressure, and how well you closed.`
+            : isCommBuilder
+            ? "How naturally you handled small talk, and how clearly you used each speaking method."
             : "Transcript analysis, filler words breakdown, pace metrics, and STAR method alignment."}
         </p>
       </div>
@@ -142,10 +183,9 @@ export default function ReportPage() {
       {/* IELTS Disclaimer Banner */}
       {isIelts && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3 backdrop-blur-md">
-          <span className="text-xl shrink-0">⚠️</span>
           <div>
-            <h3 className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
-              Estimated Band (Practice Only)
+            <h3 className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
+              Practice estimate only
             </h3>
             <p className="text-xs text-amber-800 leading-relaxed mt-0.5">
               This report provides an estimated band score for self-improvement and practice only. It is <strong>not an official, certified, or endorsed IELTS result</strong>.
@@ -167,19 +207,18 @@ export default function ReportPage() {
                     <span className={`font-serif text-5xl ${
                       report.overallBand && report.overallBand >= 7.5 ? "text-moss"
                       : report.overallBand && report.overallBand >= 6.5 ? "text-moss"
-                      : report.overallBand && report.overallBand >= 5.5 ? "text-amber-600"
-                      : "text-beak"
+                      : report.overallBand && report.overallBand >= 5.5 ? "text-amber-800"
+                      : "text-beak-deep"
                     }`}>
                       {report.overallBand ?? "—"}
                     </span>
-                    <span className="text-[10px] text-tealbird-deep font-semibold uppercase tracking-widest mt-1">Band Score</span>
+                    <span className="text-[11px] text-tealbird-deep font-semibold mt-1">Band score</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-tealbird-deep uppercase tracking-wider">Estimated Overall Band</p>
-                    <p className="text-xs text-stone-muted">Calculated across 5 exam prompts</p>
-                    <div className="pt-1 flex items-center gap-1.5 text-xs text-amber-700">
-                      <span>⚠️</span>
-                      <span className="font-medium italic">Practice Estimate — Not Certified</span>
+                    <p className="text-sm font-semibold text-tealbird-deep">Estimated overall band</p>
+                    <p className="text-xs text-stone-muted">Calculated across all three parts</p>
+                    <div className="pt-1 flex items-center gap-1.5 text-xs text-amber-800">
+                      <span className="font-medium italic">Practice estimate, not an official IELTS score</span>
                     </div>
                   </div>
                 </div>
@@ -190,13 +229,13 @@ export default function ReportPage() {
                     { label: "Fluency", key: "fluencyCoherence", color: "text-tealbird-deep" },
                     { label: "Vocabulary", key: "lexicalResource", color: "text-moss-deep" },
                     { label: "Grammar", key: "grammaticalRange", color: "text-moss" },
-                    { label: "Pronunciation", key: "pronunciation", color: "text-amber-700" },
+                    { label: "Pronunciation", key: "pronunciation", color: "text-amber-800" },
                   ].map(({ label, key, color }) => {
                     const vals = report.perAnswerFeedback.map((f: any) => f[key]).filter((v: any) => typeof v === "number");
                     const avg = vals.length > 0 ? Math.round((vals.reduce((a: number, b: number) => a + b, 0) / vals.length) * 2) / 2 : null;
                     return (
                       <div key={key} className="glass-card p-3 rounded-2xl text-center border border-line">
-                        <p className="text-[10px] font-bold text-stone-muted uppercase tracking-wider mb-1">{label}</p>
+                        <p className="text-[11px] font-bold text-stone-muted uppercase tracking-wider mb-1">{label}</p>
                         <p className={`font-serif text-3xl ${color}`}>{avg ?? "—"}</p>
                       </div>
                     );
@@ -215,25 +254,25 @@ export default function ReportPage() {
               <p
                 className={`font-serif text-5xl ${
                   report.totalFillerWordCount > 10
-                    ? "text-beak"
+                    ? "text-beak-deep"
                     : report.totalFillerWordCount > 5
-                    ? "text-amber-600"
+                    ? "text-amber-800"
                     : "text-moss"
                 }`}
               >
                 {report.totalFillerWordCount}
               </p>
-              <p className="text-xs text-stone-muted">Recorded across all prompts</p>
+              <p className="text-xs text-stone-muted">Across all your answers</p>
             </div>
 
             <div className="glass-card rounded-2xl p-5 border border-line space-y-1">
               <p className="text-xs font-medium text-stone-muted">
                 Average pace
               </p>
-              <p className="font-serif text-5xl text-tealbird">
+              <p className="font-serif text-5xl text-tealbird-deep">
                 {report.avgPace > 0 ? `${report.avgPace} WPM` : "N/A"}
               </p>
-              <p className="text-xs text-stone-muted">Optimal pace: 120–160 WPM</p>
+              <p className="text-xs text-stone-muted">Natural range: 120–160 words/min</p>
             </div>
 
             {!isIelts && (
@@ -244,13 +283,33 @@ export default function ReportPage() {
                 <p className="font-serif text-5xl text-moss">
                   {answers.length} / {data.session.questions.length}
                 </p>
-                <p className="text-xs text-stone-muted">Plus follow-up responses</p>
+                <p className="text-xs text-stone-muted">Plus follow-up questions</p>
               </div>
             )}
           </div>
 
-          {/* Optional Body Language Overview Card */}
-          {(typeof report.avgEyeContactPercent === "number" || report.overallMovementScore) && (
+          {/* Body language & eye movement: full analysis when available, older sessions fall back */}
+          {report.bodyLanguageReport ? (
+            <BodyLanguageReportCard
+              report={report.bodyLanguageReport}
+              perQuestion={report.perAnswerFeedback
+                .map((fb: any, i: number) => ({
+                  q: i + 1,
+                  // Mock interviews label by stage; scripted tracks have a readable round or method name
+                  label:
+                    (data.session.track === "mock-interview"
+                      ? data.session.questionDetails?.[i]?.stage
+                      : data.session.questionDetails?.[i]?.framework || data.session.questionDetails?.[i]?.topic) || undefined,
+                  data: fb.bodyLanguage,
+                }))
+                .filter((row: any) => row.data)}
+            />
+          ) : typeof report.avgEyeContactPercent !== "number" && !report.overallMovementScore ? (
+            <div className="rounded-2xl border border-dashed border-line bg-paper/60 p-4 text-sm text-stone-muted">
+              Turn on your camera next time to get feedback on eye contact, posture and body language.
+            </div>
+          ) : null}
+          {!report.bodyLanguageReport && (typeof report.avgEyeContactPercent === "number" || report.overallMovementScore) && (
             <div className="glass-card rounded-3xl p-6 border border-moss-light/25 shadow-xl space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
@@ -258,7 +317,7 @@ export default function ReportPage() {
                     Body language
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono text-stone-muted bg-cream/60 border border-line px-2.5 py-1 rounded-full">
+                <span className="text-[11px] font-mono text-stone-muted bg-cream/60 border border-line px-2.5 py-1 rounded-full">
                   Measured locally • Video never stored
                 </span>
               </div>
@@ -267,7 +326,7 @@ export default function ReportPage() {
                 {typeof report.avgEyeContactPercent === "number" && (
                   <div className="p-4 rounded-2xl bg-cream/60 border border-line flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold uppercase text-stone-muted">Average Eye Contact</p>
+                      <p className="text-[11px] font-bold uppercase text-stone-muted">Average Eye Contact</p>
                       <p className="text-xs text-ink/80 mt-0.5">
                         {report.avgEyeContactPercent >= 70
                           ? "Consistent direct engagement with interviewer"
@@ -281,8 +340,8 @@ export default function ReportPage() {
                         report.avgEyeContactPercent >= 70
                           ? "text-moss"
                           : report.avgEyeContactPercent >= 50
-                          ? "text-amber-600"
-                          : "text-beak"
+                          ? "text-amber-800"
+                          : "text-beak-deep"
                       }`}
                     >
                       {report.avgEyeContactPercent}%
@@ -293,7 +352,7 @@ export default function ReportPage() {
                 {report.overallMovementScore && (
                   <div className="p-4 rounded-2xl bg-cream/60 border border-line flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold uppercase text-stone-muted">Overall Head Stability</p>
+                      <p className="text-[11px] font-bold uppercase text-stone-muted">Overall Head Stability</p>
                       <p className="text-xs text-ink/80 mt-0.5">
                         {report.overallMovementScore === "low"
                           ? "Very stable, confident physical posture"
@@ -308,7 +367,7 @@ export default function ReportPage() {
                           ? "bg-moss-light/15 text-moss border border-moss-light/30"
                           : report.overallMovementScore === "moderate"
                           ? "bg-moss-light/15 text-moss-deep border border-moss-light/30"
-                          : "bg-amber-500/15 text-amber-700 border border-amber-500/30"
+                          : "bg-amber-500/15 text-amber-800 border border-amber-500/30"
                       }`}
                     >
                       {report.overallMovementScore}
@@ -350,6 +409,7 @@ export default function ReportPage() {
               feedback={fb}
               questionNumber={idx + 1}
               track={data.session.track}
+              detail={data.session.questionDetails?.[idx]}
             />
           ))
         ) : (

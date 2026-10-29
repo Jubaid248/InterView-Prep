@@ -5,6 +5,8 @@ import { createInterviewSession } from "@/lib/store";
 import { generateInitialQuestions } from "@/lib/ai/llm";
 import { getCommunicationBuilderSessionQuestions, QuestionBankItem } from "@/lib/config/questionBank";
 import { getIeltsSpeakingSessionQuestions } from "@/lib/config/ieltsQuestionBank";
+import { getDebateSessionQuestions } from "@/lib/config/debateBank";
+import { getNegotiationSessionQuestions } from "@/lib/config/negotiationBank";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,14 +17,24 @@ export async function POST(req: NextRequest) {
     let questionDetails: any[] = [];
 
     if (track === "communication-builder") {
-      // Pick 3 questions, 1 from each of 3 different frameworks (out of STAR, CAR, SEE, PAR)
+      // One small-talk scenario, then 3 prompts that each practice a different speaking method
       questionDetails = getCommunicationBuilderSessionQuestions();
       questions = questionDetails.map((q) => q.promptText);
     } else if (track === "ielts-speaking") {
-      // Pick 2 Part 1 questions + 1 Part 2 Cue Card (Part 3 follow-ups will be generated dynamically)
+      // Full examiner script: Part 1 (3 topics), Part 2 cue card + rounding-off, Part 3 (2 themes)
       const ieltsData = getIeltsSpeakingSessionQuestions();
       questions = ieltsData.questions;
       questionDetails = ieltsData.details;
+    } else if (track === "debate-practice") {
+      // Random motion and side: opening, evidence round, closing
+      const debate = getDebateSessionQuestions();
+      questions = debate.questions;
+      questionDetails = debate.details;
+    } else if (track === "negotiation-practice") {
+      // Random role-play scenario: opening, objection, conditional offer under pressure, close
+      const negotiation = getNegotiationSessionQuestions();
+      questions = negotiation.questions;
+      questionDetails = negotiation.details;
     } else {
       // Mock interview track requires resume & job description
       if (!resumeText || !jobDescription) {
@@ -42,12 +54,18 @@ export async function POST(req: NextRequest) {
       }
 
       questions = result.questions;
+      // Stage, competency, anchor and lookFor per question; used by follow-ups and feedback
+      questionDetails = result.details || [];
     }
 
     // Create session (uses MongoDB if running, or in-memory fallback)
     const defaultJob =
       track === "ielts-speaking"
         ? "IELTS Speaking Practice Exam"
+        : track === "debate-practice"
+        ? "Debate Practice"
+        : track === "negotiation-practice"
+        ? "Negotiation Practice"
         : "Communication Builder Practice";
 
     const session = await createInterviewSession({

@@ -67,7 +67,7 @@ export default function CreatorsPage() {
                 priority
               />
               <div className="absolute top-3 right-3">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/90 text-ink shadow-sm border border-line/60 backdrop-blur-md">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/90 text-ink shadow-sm border border-line/60 backdrop-blur-md">
                   {creator.tag}
                 </span>
               </div>
