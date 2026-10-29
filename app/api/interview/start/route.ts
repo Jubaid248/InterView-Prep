@@ -8,6 +8,9 @@ import { getIeltsSpeakingSessionQuestions } from "@/lib/config/ieltsQuestionBank
 import { getDebateSessionQuestions } from "@/lib/config/debateBank";
 import { getNegotiationSessionQuestions } from "@/lib/config/negotiationBank";
 
+// AI calls can be slow; give Vercel functions up to 60s instead of the default
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const { resumeText = "", jobDescription = "", track = "mock-interview" } = await req.json();

@@ -39,6 +39,15 @@ async function checkMongoConnection(): Promise<boolean> {
     console.log("✅ [DB] Connected to MongoDB database successfully.");
     return true;
   } catch (err) {
+    // In production the in-memory store isn't shared between server instances,
+    // so don't settle on it: say so loudly and retry Mongo on the next request.
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "❌ [DB] Could not connect to MongoDB. Check MONGODB_URI. Sessions will not persist until it connects.",
+        err
+      );
+      return false;
+    }
     isMongoAvailable = false;
     console.warn(
       "⚠️ [DB] MongoDB not running locally. Using fast in-memory session store."
