@@ -1,4 +1,4 @@
-# InterView-Prep
+# Parrot
 
 An AI-assisted practice studio for job interviews, structured communication, and IELTS Speaking.
 
