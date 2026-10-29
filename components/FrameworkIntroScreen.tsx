@@ -27,6 +27,25 @@ const FRAMEWORK_META: Record<
     glow: string;
   }
 > = {
+  ARE: {
+    emoji: "👋",
+    tagline: "Start small talk and keep it flowing",
+    useCases: [
+      "Networking events and first meetings",
+      "Chatting with colleagues and neighbours",
+      "Filling awkward silences naturally",
+    ],
+    smallTalkTip:
+      "Anchor to the moment you share, reveal one small real detail, then encourage them with an open question. The conversation keeps itself going.",
+    accentBg: "bg-beak/10",
+    accentText: "text-beak-deep",
+    accentBorder: "border-beak/30",
+    stepBg: "bg-beak/20",
+    stepText: "text-beak-deep",
+    badgeBg: "bg-beak/15",
+    gradient: "from-beak via-amber-500 to-moss-light",
+    glow: "rgba(226, 67, 43, 0.35)",
+  },
   STAR: {
     emoji: "⭐",
     tagline: "Turn any experience into a compelling story",
@@ -48,14 +67,14 @@ const FRAMEWORK_META: Record<
   },
   CAR: {
     emoji: "☕",
-    tagline: "Make any conversation engaging and natural",
+    tagline: "Tell short stories people actually remember",
     useCases: [
-      "Small talk and casual conversations",
-      "Sharing stories about your weekend / hobbies",
-      "Networking and first meetings",
+      "Sharing stories about your weekend or hobbies",
+      "Answering 'What have you been up to?'",
+      "Keeping casual conversations interesting",
     ],
     smallTalkTip:
-      "CAR makes small talk effortless — instead of saying 'It was good,' give context, an action, and a takeaway. People remember you.",
+      "Instead of saying 'It was good,' give context, what happened, and your takeaway. A 20-second story beats a one-word answer.",
     accentBg: "bg-moss-light/15",
     accentText: "text-moss",
     accentBorder: "border-moss-light/40",
@@ -76,13 +95,51 @@ const FRAMEWORK_META: Record<
     smallTalkTip:
       "When someone asks 'What do you do?', use SEE: make a bold statement, give a real example, and explain why it matters. Instant impact.",
     accentBg: "bg-amber-500/15",
-    accentText: "text-amber-700",
+    accentText: "text-amber-800",
     accentBorder: "border-amber-500/40",
     stepBg: "bg-amber-600/30",
     stepText: "text-amber-800",
     badgeBg: "bg-amber-500/25",
     gradient: "from-amber-500 via-amber-400 to-orange-500",
     glow: "rgba(251, 191, 36, 0.4)",
+  },
+  PREP: {
+    emoji: "🗣️",
+    tagline: "Share an opinion clearly in under a minute",
+    useCases: [
+      "Meetings where you're asked what you think",
+      "Discussion and debate questions",
+      "Making a case for a decision",
+    ],
+    smallTalkTip:
+      "Say your point, give one reason, add a quick example, then say your point again. Opening and closing on the same point is what makes it stick.",
+    accentBg: "bg-amber-500/15",
+    accentText: "text-amber-800",
+    accentBorder: "border-amber-500/40",
+    stepBg: "bg-amber-600/30",
+    stepText: "text-amber-800",
+    badgeBg: "bg-amber-500/25",
+    gradient: "from-amber-500 via-beak to-amber-400",
+    glow: "rgba(217, 119, 6, 0.4)",
+  },
+  PPF: {
+    emoji: "🧭",
+    tagline: "Introduce yourself with a clear story arc",
+    useCases: [
+      "'Tell me about yourself'",
+      "'So, what do you do?' at events",
+      "Introducing yourself to a new team",
+    ],
+    smallTalkTip:
+      "Where you started, what you do now, where you're heading. Three short sentences make you easy to remember and easy to ask a follow-up question.",
+    accentBg: "bg-moss-light/15",
+    accentText: "text-moss-deep",
+    accentBorder: "border-moss-light/40",
+    stepBg: "bg-moss/30",
+    stepText: "text-moss-deep",
+    badgeBg: "bg-moss-light/25",
+    gradient: "from-moss-deep via-moss to-tealbird",
+    glow: "rgba(47, 94, 37, 0.4)",
   },
   PAR: {
     emoji: "🎯",
@@ -124,9 +181,9 @@ function FrameworkSlide({
       {/* Counter */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-mono font-bold text-stone-muted">
-          Framework {slideIndex + 1} of {total}
+          Method {slideIndex + 1} of {total}
         </span>
-        <span className={`text-[10px] font-semibold uppercase tracking-widest px-3.5 py-1 rounded-full border ${meta.accentBg} ${meta.accentText} ${meta.accentBorder} shadow-md`}>
+        <span className={`text-[11px] font-semibold uppercase tracking-widest px-3.5 py-1 rounded-full border ${meta.accentBg} ${meta.accentText} ${meta.accentBorder} shadow-md`}>
           {fw} Method
         </span>
       </div>
@@ -153,7 +210,7 @@ function FrameworkSlide({
 
           <div>
             <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest mb-3">
-              Best Used For
+              Best for
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {meta.useCases.map((uc, i) => (
@@ -168,7 +225,7 @@ function FrameworkSlide({
           {/* Steps */}
           <div>
             <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest mb-3">
-              The {fw} Steps Breakdown
+              The steps
             </p>
             <div className="grid grid-cols-1 gap-3">
               {def.steps.map((step, i) => (
@@ -195,7 +252,7 @@ function FrameworkSlide({
             <span className="text-2xl shrink-0">🗣️</span>
             <div>
               <p className="text-[11px] font-semibold text-ink/80 uppercase tracking-wider mb-0.5">
-                Communication Tip
+                Tip
               </p>
               <p className="text-xs text-ink leading-relaxed">{meta.smallTalkTip}</p>
             </div>
@@ -224,14 +281,14 @@ function FrameworkSlide({
         {exampleOpen && (
           <div className="px-6 py-5 space-y-4 border-t border-line bg-cream/60 animate-in fade-in duration-300">
             <div>
-              <p className="text-[10px] font-semibold text-stone-muted uppercase tracking-widest mb-1">
+              <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest mb-1">
                 Prompt
               </p>
               <p className="text-xs font-semibold text-ink italic">&ldquo;{detail.promptText}&rdquo;</p>
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold text-stone-muted uppercase tracking-widest mb-2.5">
+              <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest mb-2.5">
                 Sentence-by-Sentence Step Mapping
               </p>
               <div className="space-y-3">
@@ -259,7 +316,7 @@ function FrameworkSlide({
 }
 
 function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
-  const allFrameworks: FrameworkType[] = ["STAR", "CAR", "SEE", "PAR"];
+  const allFrameworks: FrameworkType[] = frameworks.map((f) => f.framework);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
@@ -271,15 +328,15 @@ function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
           Speak With Structure & Confidence
         </h1>
         <p className="text-sm text-ink/80 max-w-lg mx-auto leading-relaxed">
-          Master 4 proven communication frameworks designed for behavioral interviews, technical explanations, and natural small talk.
+          Start with a real small-talk conversation, then practice three proven speaking methods with Tota.
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { icon: "📚", label: "4 Frameworks", sub: "Step-by-step breakdowns" },
-          { icon: "✍️", label: "Annotated Examples", sub: "Sentence-level mappings" },
-          { icon: "🎙️", label: "3 Voice Prompts", sub: "Real-time AI evaluation" },
+          { icon: "👋", label: "Small talk", sub: "Tota plays the other person" },
+          { icon: "📚", label: "3 Methods", sub: "Step-by-step breakdowns" },
+          { icon: "🎙️", label: `${frameworks.length} Voice Prompts`, sub: "With natural follow-ups" },
         ].map((item) => (
           <div key={item.label} className="flex flex-col items-center text-center gap-1.5 glass-card p-5 rounded-2xl border border-line shadow-xl">
             <span className="text-3xl">{item.icon}</span>
@@ -291,7 +348,7 @@ function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
 
       <div className="space-y-3">
         <p className="text-[11px] font-semibold text-stone-muted uppercase tracking-widest">
-          Framework Overview
+          Your session
         </p>
         <div className="space-y-3">
           {allFrameworks.map((fw) => {
@@ -314,7 +371,7 @@ function OverviewSlide({ frameworks }: { frameworks: QuestionBankItem[] }) {
                   </div>
                 </div>
                 {isInSession && (
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full ${meta.badgeBg} ${meta.accentText} border ${meta.accentBorder} shrink-0`}>
+                  <span className={`text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full ${meta.badgeBg} ${meta.accentText} border ${meta.accentBorder} shrink-0`}>
                     In Session
                   </span>
                 )}
@@ -378,7 +435,7 @@ export default function FrameworkIntroScreen({
             onClick={goPrev}
             className="flex items-center gap-2 px-6 py-4 rounded-2xl glass-card hover:bg-line text-ink text-xs font-bold transition-all"
           >
-            ← Previous
+            ← Back
           </button>
         )}
 
@@ -388,7 +445,7 @@ export default function FrameworkIntroScreen({
             onClick={onStartPractice}
             className="flex-1 py-4 px-8 rounded-2xl bg-moss hover:bg-moss-deep text-cream font-semibold text-sm transition-all shadow-[0_3px_0_#1C3B16] active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2"
           >
-            <span>Start Communication Voice Practice</span>
+            <span>Start practice</span>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
@@ -399,7 +456,7 @@ export default function FrameworkIntroScreen({
             onClick={goNext}
             className="flex-1 py-4 px-8 rounded-2xl bg-moss hover:bg-moss-deep text-cream font-semibold text-sm transition-all shadow-[0_3px_0_#1C3B16] active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2"
           >
-            <span>{slideIndex === 0 ? "Learn Frameworks" : "Next Framework"}</span>
+            <span>{slideIndex === 0 ? "See the methods" : "Next method"}</span>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>

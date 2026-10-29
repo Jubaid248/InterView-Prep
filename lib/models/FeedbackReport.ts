@@ -24,6 +24,7 @@ export interface IPerAnswerFeedback {
   // Body language signals (optional — only set when camera was enabled)
   eyeContactPercent?: number | null;
   movementScore?: "low" | "moderate" | "high" | null;
+  bodyLanguage?: Record<string, unknown> | null;
   // IELTS Speaking criteria (1.0 - 9.0 band scale)
   fluencyCoherence?: number;
   lexicalResource?: number;
@@ -42,6 +43,7 @@ export interface IFeedbackReport extends Document {
   overallBand?: number;
   avgEyeContactPercent?: number | null;
   overallMovementScore?: "low" | "moderate" | "high" | null;
+  bodyLanguageReport?: Record<string, unknown> | null;
   createdAt: Date;
 }
 
@@ -74,6 +76,7 @@ const PerAnswerFeedbackSchema = new Schema<IPerAnswerFeedback>(
     suggestions: { type: [String], default: [] },
     eyeContactPercent: { type: Number, default: null },
     movementScore: { type: String, enum: ["low", "moderate", "high", null], default: null },
+    bodyLanguage: { type: Schema.Types.Mixed, default: null },
     fluencyCoherence: { type: Number },
     lexicalResource: { type: Number },
     grammaticalRange: { type: Number },
@@ -94,6 +97,7 @@ const FeedbackReportSchema = new Schema<IFeedbackReport>(
     overallBand: { type: Number },
     avgEyeContactPercent: { type: Number, default: null },
     overallMovementScore: { type: String, enum: ["low", "moderate", "high", null], default: null },
+    bodyLanguageReport: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true }
 );

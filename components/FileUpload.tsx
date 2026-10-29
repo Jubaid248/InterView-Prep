@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError, requestErrorFrom } from "@/lib/friendlyError";
 import { useState, useRef, ChangeEvent, DragEvent } from "react";
 
 interface FileUploadProps {
@@ -24,7 +25,7 @@ export default function FileUpload({
     );
 
     if (!hasValidExt && !file.type.startsWith("text/")) {
-      setError("Please upload a PDF (.pdf), Text (.txt), or Markdown (.md) file.");
+      setError("Upload a PDF, TXT or Markdown file.");
       return;
     }
 
@@ -40,31 +41,13 @@ export default function FileUpload({
         body: formData,
       });
 
-      const contentType = res.headers.get("content-type");
-      let data;
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        throw new Error(
-          `Server returned status ${res.status}. ${
-            res.status === 404
-              ? "Route not found — please restart the dev server."
-              : text.slice(0, 150)
-          }`
-        );
-      }
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to parse file.");
-      }
+      if (!res.ok) throw await requestErrorFrom(res);
+      const data = await res.json();
 
       setUploadedFileName(data.fileName);
       onTextExtracted(data.text, data.fileName);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to extract text from file."
-      );
+      setError(friendlyError("resume", err));
     } finally {
       setLoading(false);
     }
@@ -131,13 +114,13 @@ export default function FileUpload({
               <p className="text-ink font-medium truncate">
                 {uploadedFileName}
               </p>
-              <p className="text-xs text-moss">Text extracted successfully</p>
+              <p className="text-xs text-moss">Resume added</p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleRemove}
-            className="text-xs text-stone-muted hover:text-beak transition-colors px-2 py-1 rounded-md hover:bg-line"
+            className="text-xs text-stone-muted hover:text-beak-deep transition-colors px-2 py-1 rounded-md hover:bg-line"
           >
             Remove
           </button>
@@ -175,7 +158,7 @@ export default function FileUpload({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              <p className="text-xs text-stone-muted">Extracting text from document...</p>
+              <p className="text-xs text-stone-muted">Reading your resume…</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
@@ -196,7 +179,7 @@ export default function FileUpload({
       )}
 
       {error && (
-        <p className="text-xs text-beak px-1">{error}</p>
+        <p className="text-xs text-beak-deep px-1">{error}</p>
       )}
     </div>
   );

@@ -9,6 +9,36 @@ import {
 } from "@/lib/store";
 import { transcribeAudio } from "@/lib/ai/transcribe";
 import { generateFollowUp } from "@/lib/ai/llm";
+import type { FollowUpStyle } from "@/lib/config/sessionScript";
+
+/**
+ * Which follow-up (if any) Tota asks after a main answer. Scripted tracks set
+ * followUpStyle per question; mock interviews always probe once.
+ */
+function resolveFollowUpStyle(track: string, detail: any): FollowUpStyle | null {
+  if (detail && "followUpStyle" in detail) return detail.followUpStyle ?? null;
+  if (track === "ielts-speaking") return null;
+  return "interview";
+}
+
+// Role-plays where the counterpart must remember what was already said
+const CONVERSATIONAL_TRACKS = new Set(["negotiation-practice"]);
+
+function formatHistory(answers: any[]): string {
+  return [...answers]
+    .sort((a, b) => a.questionIndex - b.questionIndex)
+    .map((a) =>
+      [
+        `Tota: ${a.questionText}`,
+        `User: ${a.answerTranscript || "(no answer)"}`,
+        a.followUpText ? `Tota: ${a.followUpText}` : "",
+        a.followUpTranscript ? `User: ${a.followUpTranscript}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    )
+    .join("\n");
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,12 +52,15 @@ export async function POST(req: NextRequest) {
       track = "mock-interview",
       eyeContactPercent,
       movementScore,
+      bodyLanguage,
     } = await req.json();
 
     const blData = {
       eyeContactPercent: typeof eyeContactPercent === "number" ? eyeContactPercent : null,
       movementScore: movementScore || null,
     };
+    // Full eye-movement and posture tally for this recording (counts only, never video)
+    const blTally = bodyLanguage && typeof bodyLanguage === "object" && bodyLanguage.samples > 0 ? bodyLanguage : null;
 
     if (!sessionId || !audioBase64 || !questionText) {
       return NextResponse.json(
@@ -61,164 +94,18 @@ export async function POST(req: NextRequest) {
 
     const effectiveTrack = session.track || track || "mock-interview";
 
-    // --- IELTS Speaking Track Flow ---
-    if (effectiveTrack === "ielts-speaking") {
-      const idx = session.currentQuestionIndex;
+    const idx = session.currentQuestionIndex;
+    const totalQuestions = session.questions.length;
+    const isConversational = CONVERSATIONAL_TRACKS.has(effectiveTrack);
+    const loadHistory = async () =>
+      isConversational ? formatHistory(await getAnswersForSession(sessionId)) : undefined;
 
-      if (idx === 0 || idx === 1) {
-        // Part 1 Questions (no follow-ups)
-        await createAnswerRecord({
-          sessionId,
-          questionIndex: idx,
-          questionText,
-          answerTranscript: transcript,
-          audioBase64,
-          audioDuration: audioDuration || 0,
-          ...blData,
-        });
+    // Moves the session to the next scripted question, or marks it complete
+    const advance = async (lastLineSaid: string) => {
+      const nextIndex = idx + 1;
 
-        const nextIndex = idx + 1;
-        await updateInterviewSession(sessionId, {
-          currentQuestionIndex: nextIndex,
-          awaitingFollowUp: false,
-        });
-
-        return NextResponse.json({
-          transcript,
-          nextQuestion: session.questions[nextIndex],
-          questionIndex: nextIndex,
-          totalQuestions: 5,
-          isFollowUp: false,
-        });
-      }
-
-      if (idx === 2) {
-        // Part 2 Cue Card -> Generate Part 3 Discussion Question #1
-        const result = await generateFollowUp("ielts-speaking", questionText, transcript);
-        const part3Q1 = result.followUpQuestion || "How do you think this topic affects people in your society today?";
-
-        const updatedQuestions = [...session.questions, part3Q1];
-        const updatedDetails = [
-          ...(session.questionDetails || []),
-          { part: 3, topic: "Part 3 Discussion", question: part3Q1 },
-        ];
-
-        await createAnswerRecord({
-          sessionId,
-          questionIndex: idx,
-          questionText,
-          answerTranscript: transcript,
-          audioBase64,
-          audioDuration: audioDuration || 0,
-          followUpText: part3Q1,
-          ...blData,
-        });
-
-        await updateInterviewSession(sessionId, {
-          questions: updatedQuestions,
-          questionDetails: updatedDetails,
-          currentQuestionIndex: 3,
-          awaitingFollowUp: false,
-        });
-
-        return NextResponse.json({
-          transcript,
-          nextQuestion: part3Q1,
-          questionIndex: 3,
-          totalQuestions: 5,
-          isFollowUp: false,
-        });
-      }
-
-      if (idx === 3) {
-        // Part 3 Question #1 -> Generate Part 3 Discussion Question #2 using growing history
-        const answersList = await getAnswersForSession(sessionId);
-        const cueCardRecord = answersList.find((a: any) => a.questionIndex === 2);
-
-        const historyContext = `PART 2 CUE CARD:\n${session.questions[2] || "Cue Card Topic"}\n\nCANDIDATE'S CUE CARD ANSWER:\n${cueCardRecord?.answerTranscript || ""}\n\nPART 3 QUESTION 1:\n${questionText}\n\nCANDIDATE'S RESPONSE TO Q1:\n${transcript}`;
-
-        const result = await generateFollowUp("ielts-speaking", historyContext, transcript);
-        const part3Q2 = result.followUpQuestion || "Looking toward the future, how might this trend change in the next decade?";
-
-        const updatedQuestions = [...session.questions, part3Q2];
-        const updatedDetails = [
-          ...(session.questionDetails || []),
-          { part: 3, topic: "Part 3 Discussion", question: part3Q2 },
-        ];
-
-        await createAnswerRecord({
-          sessionId,
-          questionIndex: idx,
-          questionText,
-          answerTranscript: transcript,
-          audioBase64,
-          audioDuration: audioDuration || 0,
-          followUpText: part3Q2,
-          ...blData,
-        });
-
-        await updateInterviewSession(sessionId, {
-          questions: updatedQuestions,
-          questionDetails: updatedDetails,
-          currentQuestionIndex: 4,
-          awaitingFollowUp: false,
-        });
-
-        return NextResponse.json({
-          transcript,
-          nextQuestion: part3Q2,
-          questionIndex: 4,
-          totalQuestions: 5,
-          isFollowUp: false,
-        });
-      }
-
-      if (idx >= 4) {
-        // Part 3 Question #2 -> Final Answer
-        await createAnswerRecord({
-          sessionId,
-          questionIndex: idx,
-          questionText,
-          answerTranscript: transcript,
-          audioBase64,
-          audioDuration: audioDuration || 0,
-          ...blData,
-        });
-
-        await updateInterviewSession(sessionId, {
-          currentQuestionIndex: 5,
-          awaitingFollowUp: false,
-          status: "in_progress",
-        });
-
-        return NextResponse.json({
-          transcript,
-          isComplete: true,
-          message: "All 5 IELTS Speaking prompts completed. Ready to generate feedback.",
-        });
-      }
-    }
-
-    // --- Standard Mock Interview / Communication Builder Flow ---
-    if (isFollowUp) {
-      // Follow-up answer — update existing answer record
-      await updateAnswerRecord(sessionId, session.currentQuestionIndex, {
-        followUpTranscript: transcript,
-        followUpAudioBase64: audioBase64,
-        followUpAudioDuration: audioDuration || 0,
-        ...(blData.eyeContactPercent !== null ? { eyeContactPercent: blData.eyeContactPercent } : {}),
-        ...(blData.movementScore !== null ? { movementScore: blData.movementScore } : {}),
-      });
-
-      // Move to next main question
-      const nextIndex = session.currentQuestionIndex + 1;
-      await updateInterviewSession(sessionId, {
-        currentQuestionIndex: nextIndex,
-        awaitingFollowUp: false,
-      });
-
-      // Check if interview is complete
-      if (nextIndex >= session.questions.length) {
+      if (nextIndex >= totalQuestions) {
+        await updateInterviewSession(sessionId, { currentQuestionIndex: nextIndex, awaitingFollowUp: false });
         return NextResponse.json({
           transcript,
           isComplete: true,
@@ -226,53 +113,94 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Return next main question
-      const nextQuestion = session.questions[nextIndex];
+      // Mid-role-play beats are written live so they fit what has already been said;
+      // the scripted line stays as a fallback
+      let nextQuestion: string = session.questions[nextIndex];
+      const nextDetail = session.questionDetails?.[nextIndex];
+      const updates: Record<string, any> = { currentQuestionIndex: nextIndex, awaitingFollowUp: false };
+      if (nextDetail?.beat) {
+        const result = await generateFollowUp(effectiveTrack, lastLineSaid, transcript, {
+          detail: { ...nextDetail, followUpStyle: "negotiation-beat" },
+          history: await loadHistory(),
+        });
+        if (result.followUpQuestion) {
+          nextQuestion = result.followUpQuestion;
+          const questions = [...session.questions];
+          questions[nextIndex] = nextQuestion;
+          updates.questions = questions;
+        } else {
+          console.warn("[Answer API] Beat generation failed, using scripted line:", result.error);
+        }
+      }
+
+      await updateInterviewSession(sessionId, updates);
+
       return NextResponse.json({
         transcript,
         nextQuestion,
         questionIndex: nextIndex,
-        totalQuestions: session.questions.length,
+        totalQuestions,
         isFollowUp: false,
       });
-    } else {
-      // Main question answer — generate a follow-up question via generateFollowUp
-      const result = await generateFollowUp(effectiveTrack, questionText, transcript);
+    };
 
-      if (result.error || !result.followUpQuestion) {
-        return NextResponse.json(
-          { error: `Failed to generate follow-up question: ${result.error || "No follow-up question generated"}` },
-          { status: 500 }
-        );
-      }
-
-      const followUpQuestion: string = result.followUpQuestion;
-
-      // Save answer record
-      await createAnswerRecord({
-        sessionId,
-        questionIndex: session.currentQuestionIndex,
-        questionText,
-        answerTranscript: transcript,
-        audioBase64,
-        audioDuration: audioDuration || 0,
-        followUpText: followUpQuestion,
-        ...blData,
-      });
-
-      // Mark session as awaiting follow-up
-      await updateInterviewSession(sessionId, {
-        awaitingFollowUp: true,
-      });
-
-      return NextResponse.json({
-        transcript,
-        followUpQuestion,
-        questionIndex: session.currentQuestionIndex,
-        totalQuestions: session.questions.length,
-        isFollowUp: true,
-      });
+    if (isFollowUp) {
+      // Follow-up answer — update existing answer record
+      await updateAnswerRecord(sessionId, idx, {
+        followUpTranscript: transcript,
+        followUpAudioBase64: audioBase64,
+        followUpAudioDuration: audioDuration || 0,
+        ...(blData.eyeContactPercent !== null ? { eyeContactPercent: blData.eyeContactPercent } : {}),
+        ...(blData.movementScore !== null ? { movementScore: blData.movementScore } : {}),
+        ...(blTally ? { followUpBodyLanguage: blTally } : {}),
+      } as any);
+      return advance(questionText);
     }
+
+    const detail = session.questionDetails?.[idx];
+    const style = resolveFollowUpStyle(effectiveTrack, detail);
+
+    let followUpQuestion: string | null = null;
+    if (style) {
+      // Mock interviews also give the interviewer the CV and JD so it can verify claims
+      const result = await generateFollowUp(effectiveTrack, questionText, transcript, {
+        detail,
+        history: await loadHistory(),
+        ...(effectiveTrack === "mock-interview"
+          ? { resumeText: session.resumeText, jobDescription: session.jobDescription }
+          : {}),
+      });
+      if (result.followUpQuestion) {
+        followUpQuestion = result.followUpQuestion;
+      } else {
+        // Keep the conversation moving rather than stopping the session on an LLM hiccup
+        console.warn("[Answer API] Follow-up generation failed, moving on:", result.error);
+      }
+    }
+
+    await createAnswerRecord({
+      sessionId,
+      questionIndex: idx,
+      questionText,
+      answerTranscript: transcript,
+      audioBase64,
+      audioDuration: audioDuration || 0,
+      ...(followUpQuestion ? { followUpText: followUpQuestion } : {}),
+      ...blData,
+      bodyLanguage: blTally,
+    });
+
+    if (!followUpQuestion) return advance(questionText);
+
+    await updateInterviewSession(sessionId, { awaitingFollowUp: true });
+
+    return NextResponse.json({
+      transcript,
+      followUpQuestion,
+      questionIndex: idx,
+      totalQuestions,
+      isFollowUp: true,
+    });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error("[/api/interview/answer] Error:", error);

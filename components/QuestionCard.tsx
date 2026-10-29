@@ -60,7 +60,7 @@ export default function QuestionCard({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <span
           className={`text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${isFollowUp
-              ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+              ? "bg-amber-500/15 text-amber-800 border-amber-500/30"
               : "bg-moss-light/15 text-moss-deep border-moss-light/30"
             }`}
         >

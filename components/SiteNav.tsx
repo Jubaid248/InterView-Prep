@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { friendlyError, requestErrorFrom } from "@/lib/friendlyError";
 import { useRouter, usePathname } from "next/navigation";
+import ParrotLogo from "@/components/ParrotLogo";
 
 export default function SiteNav() {
   const router = useRouter();
@@ -10,6 +12,7 @@ export default function SiteNav() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loadingTrack, setLoadingTrack] = useState<string | null>(null);
+  const [launchError, setLaunchError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close the mobile menu whenever the route changes
@@ -27,7 +30,9 @@ export default function SiteNav() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLaunchTrack = async (track: "ielts-speaking" | "communication-builder") => {
+  const handleLaunchTrack = async (
+    track: "ielts-speaking" | "communication-builder" | "debate-practice" | "negotiation-practice"
+  ) => {
     setLoadingTrack(track);
     try {
       const res = await fetch("/api/interview/start", {
@@ -36,7 +41,7 @@ export default function SiteNav() {
         body: JSON.stringify({ track }),
       });
 
-      if (!res.ok) throw new Error("Failed to start session");
+      if (!res.ok) throw await requestErrorFrom(res);
 
       const data = await res.json();
       localStorage.setItem("currentSessionId", data.sessionId);
@@ -54,8 +59,8 @@ export default function SiteNav() {
       setMobileOpen(false);
       router.push(`/interview/${data.sessionId}`);
     } catch (err) {
-      console.error("Error starting practice session:", err);
-      router.push("/");
+      setLaunchError(friendlyError("start-track", err));
+      setTimeout(() => setLaunchError(""), 6000);
     } finally {
       setLoadingTrack(null);
     }
@@ -70,15 +75,7 @@ export default function SiteNav() {
         
         {/* Brand / Logo (Left) */}
         <Link href="/" className="flex items-center gap-2 group">
-          <span className="w-8 h-8 rounded-full bg-moss flex items-center justify-center group-hover:rotate-[-8deg] transition-transform">
-            <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
-              <polygon points="15,4 8,7 6,13 11,12" fill="#B4E585" />
-              <polygon points="15,4 11,12 17,15 19,9" fill="#5CB34C" />
-              <polygon points="6,13 11,12 17,15 10,20" fill="#3E9443" />
-              <polygon points="8,7 3,9 4,14 6,13" fill="#FF7A57" />
-              <circle cx="11" cy="8.5" r="1.3" fill="#17221A" />
-            </svg>
-          </span>
+          <ParrotLogo className="w-9 h-9 group-hover:rotate-[-8deg] transition-transform" />
           <span className="text-lg font-semibold tracking-tight text-ink">
             Parrot
           </span>
@@ -115,7 +112,7 @@ export default function SiteNav() {
               className="flex items-center gap-1 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full text-stone-muted hover:text-ink transition-colors"
               aria-expanded={dropdownOpen}
             >
-              <span>Other Tracks</span>
+              <span>More practice</span>
               <svg
                 className={`w-3.5 h-3.5 transition-transform duration-200 ${
                   dropdownOpen ? "rotate-180 text-ink" : "text-stone-soft"
@@ -131,8 +128,8 @@ export default function SiteNav() {
             {/* Dropdown Menu (Only IELTS Speaking and Communication Builder) */}
             {dropdownOpen && (
               <div className="absolute right-0 mt-3 w-64 rounded-2xl p-2 bg-paper border border-line shadow-[0_20px_40px_-20px_rgba(23,34,26,0.35)] z-50 animate-speech-pop">
-                <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">
-                  Select Practice Module
+                <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">
+                  Choose a practice
                 </div>
 
                 <div className="mt-1 space-y-1">
@@ -145,15 +142,15 @@ export default function SiteNav() {
                     <span className="mt-0.5 w-2 h-2 rounded-full bg-moss-light shrink-0" />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-800 group-hover:text-moss transition-colors">
+                        <span className="text-xs font-semibold text-ink group-hover:text-moss transition-colors">
                           IELTS Speaking
                         </span>
                         {loadingTrack === "ielts-speaking" && (
-                          <span className="text-[10px] text-blue-500 animate-pulse font-mono">Launching...</span>
+                          <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
-                        Band 9 fluency & cue card prep
+                      <p className="text-[11px] text-stone-muted font-normal leading-tight mt-0.5">
+                        All three parts, like the real test
                       </p>
                     </div>
                   </button>
@@ -167,15 +164,59 @@ export default function SiteNav() {
                     <span className="mt-0.5 w-2 h-2 rounded-full bg-beak shrink-0" />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-800 group-hover:text-moss transition-colors">
+                        <span className="text-xs font-semibold text-ink group-hover:text-moss transition-colors">
                           Communication Builder
                         </span>
                         {loadingTrack === "communication-builder" && (
-                          <span className="text-[10px] text-blue-500 animate-pulse font-mono">Launching...</span>
+                          <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
-                        STAR framework executive clarity
+                      <p className="text-[11px] text-stone-muted font-normal leading-tight mt-0.5">
+                        Small talk and speaking methods
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Debate Practice */}
+                  <button
+                    onClick={() => handleLaunchTrack("debate-practice")}
+                    disabled={loadingTrack !== null}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-cream group transition-all flex items-start gap-2.5"
+                  >
+                    <span className="mt-0.5 w-2 h-2 rounded-full bg-tealbird shrink-0" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-ink group-hover:text-moss transition-colors">
+                          Debate Practice
+                        </span>
+                        {loadingTrack === "debate-practice" && (
+                          <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-stone-muted font-normal leading-tight mt-0.5">
+                        Argue a motion against Tota
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Negotiation Practice */}
+                  <button
+                    onClick={() => handleLaunchTrack("negotiation-practice")}
+                    disabled={loadingTrack !== null}
+                    className="w-full text-left p-2.5 rounded-xl hover:bg-cream group transition-all flex items-start gap-2.5"
+                  >
+                    <span className="mt-0.5 w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-ink group-hover:text-moss transition-colors">
+                          Negotiation Practice
+                        </span>
+                        {loadingTrack === "negotiation-practice" && (
+                          <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-stone-muted font-normal leading-tight mt-0.5">
+                        Role-play a deal with Tota
                       </p>
                     </div>
                   </button>
@@ -185,13 +226,13 @@ export default function SiteNav() {
           </div>
         </nav>
 
-        {/* Right CTA Button (Dark pill button like Cloudkit 'Try free') + mobile menu toggle */}
+        {/* Right CTA button + mobile menu toggle */}
         <div className="flex items-center gap-1">
           <Link
             href="/mock-interview"
             className="text-sm font-semibold px-5 py-2.5 rounded-xl bg-moss hover:bg-moss-deep text-cream transition-all duration-200 active:scale-95 whitespace-nowrap"
           >
-            Try free
+            Start practicing
           </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -209,6 +250,12 @@ export default function SiteNav() {
           </button>
         </div>
       </div>
+
+      {launchError && (
+        <div role="alert" className="mt-2 mx-auto max-w-md rounded-xl border border-beak/30 bg-beak-soft px-4 py-2.5 text-sm text-ink text-center">
+          {launchError}
+        </div>
+      )}
 
       {/* Mobile Menu */}
       {mobileOpen && (
@@ -230,7 +277,7 @@ export default function SiteNav() {
             Creator
           </Link>
           <div className="px-4 pt-3 pb-1 text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold border-t border-slate-100 mt-1">
-            Other Tracks
+            More practice
           </div>
           <button
             onClick={() => handleLaunchTrack("ielts-speaking")}
@@ -238,9 +285,9 @@ export default function SiteNav() {
             className="w-full text-left px-4 py-3 rounded-2xl hover:bg-cream flex items-center gap-2.5"
           >
             <span className="mt-0.5 w-2 h-2 rounded-full bg-moss-light shrink-0" />
-            <span className="text-sm font-medium text-slate-800">IELTS Speaking</span>
+            <span className="text-sm font-medium text-ink">IELTS Speaking</span>
             {loadingTrack === "ielts-speaking" && (
-              <span className="text-[11px] text-blue-500 animate-pulse font-mono">Launching...</span>
+              <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
             )}
           </button>
           <button
@@ -249,9 +296,31 @@ export default function SiteNav() {
             className="w-full text-left px-4 py-3 rounded-2xl hover:bg-cream flex items-center gap-2.5"
           >
             <span className="mt-0.5 w-2 h-2 rounded-full bg-beak shrink-0" />
-            <span className="text-sm font-medium text-slate-800">Communication Builder</span>
+            <span className="text-sm font-medium text-ink">Communication Builder</span>
             {loadingTrack === "communication-builder" && (
-              <span className="text-[11px] text-blue-500 animate-pulse font-mono">Launching...</span>
+              <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
+            )}
+          </button>
+          <button
+            onClick={() => handleLaunchTrack("debate-practice")}
+            disabled={loadingTrack !== null}
+            className="w-full text-left px-4 py-3 rounded-2xl hover:bg-cream flex items-center gap-2.5"
+          >
+            <span className="mt-0.5 w-2 h-2 rounded-full bg-tealbird shrink-0" />
+            <span className="text-sm font-medium text-ink">Debate Practice</span>
+            {loadingTrack === "debate-practice" && (
+              <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
+            )}
+          </button>
+          <button
+            onClick={() => handleLaunchTrack("negotiation-practice")}
+            disabled={loadingTrack !== null}
+            className="w-full text-left px-4 py-3 rounded-2xl hover:bg-cream flex items-center gap-2.5"
+          >
+            <span className="mt-0.5 w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            <span className="text-sm font-medium text-ink">Negotiation Practice</span>
+            {loadingTrack === "negotiation-practice" && (
+              <span className="text-[11px] text-moss animate-pulse font-mono">Launching...</span>
             )}
           </button>
         </div>

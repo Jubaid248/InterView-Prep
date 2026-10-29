@@ -118,13 +118,13 @@ export default function SystemCheck({
       {/* Header Banner */}
       <div className="text-center space-y-3 mb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-moss-light/15 border border-moss-light/30 text-moss-deep text-xs font-mono font-bold tracking-wider uppercase">
-          <span>Interview studio setup</span>
+          <span>Before you start</span>
         </div>
         <h1 className="font-serif font-normal text-4xl sm:text-5xl text-ink">
-          Choose Your Interview Format
+          Choose how you want to practice
         </h1>
         <p className="text-sm text-stone-muted max-w-xl mx-auto">
-          Practice at your own relaxed pace, or take a serious proctored interview with screen takeover and automatic hands-free conversation.
+          Practice at your own pace, or try a real interview: full screen, camera on, and Tota records each answer automatically.
         </p>
       </div>
 
@@ -140,25 +140,25 @@ export default function SystemCheck({
           }`}
         >
           <div className="flex items-center justify-between pb-3">
-            <span className="text-2xl">🎯</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-moss-light" aria-hidden="true" />
             <span
-              className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+              className={`text-[11px] font-mono px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
                 selectedMode === "practice"
                   ? "bg-moss-light/20 text-moss border border-moss-light/40"
                   : "bg-line text-stone-muted"
               }`}
             >
-              Casual & Flexible
+              Relaxed
             </span>
           </div>
-          <h3 className="text-lg font-bold text-ink">Practice Mode</h3>
+          <h3 className="text-lg font-bold text-ink">Practice</h3>
           <p className="text-xs text-ink/80 mt-2 leading-relaxed">
-            Stress-free preparation. No screen takeover. Tap to record when you&apos;re ready, and turn your camera ON or OFF whenever you like.
+            Go at your own pace. Tap the mic when you&apos;re ready, and turn your camera on or off whenever you like.
           </p>
           <div className="mt-4 pt-3 border-t border-line flex flex-wrap gap-2 text-[11px] font-mono text-stone-muted">
-            <span className="text-moss font-semibold">✓ No Fullscreen Lock</span>
-            <span className="text-moss font-semibold">✓ Camera Toggle On/Off</span>
-            <span className="text-moss font-semibold">✓ Tap-To-Record</span>
+            <span className="text-moss font-semibold">✓ Your normal window</span>
+            <span className="text-moss font-semibold">✓ Camera optional</span>
+            <span className="text-moss font-semibold">✓ Tap to record</span>
           </div>
         </div>
 
@@ -172,25 +172,25 @@ export default function SystemCheck({
           }`}
         >
           <div className="flex items-center justify-between pb-3">
-            <span className="text-2xl">⚔️</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-beak" aria-hidden="true" />
             <span
-              className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+              className={`text-[11px] font-mono px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
                 selectedMode === "serious"
                   ? "bg-beak/20 text-beak-deep border border-beak/40"
                   : "bg-line text-stone-muted"
               }`}
             >
-              AI Proctored Simulation
+              Like the real thing
             </span>
           </div>
-          <h3 className="text-lg font-bold text-ink">Serious Interview</h3>
+          <h3 className="text-lg font-bold text-ink">Real interview</h3>
           <p className="text-xs text-ink/80 mt-2 leading-relaxed">
-            Full-scale proctored interview. Takes over entire screen. Camera mandatory with gaze tracking. Automatically records the entire conversation hands-free.
+            Full screen, camera on, no notes. Tota asks each question out loud and starts recording as soon as it finishes, just like a live call.
           </p>
           <div className="mt-4 pt-3 border-t border-line flex flex-wrap gap-2 text-[11px] font-mono text-stone-muted">
-            <span className="text-beak font-semibold">🔒 Fullscreen Takeover</span>
-            <span className="text-beak font-semibold">📹 Mandatory Video</span>
-            <span className="text-beak font-semibold">⚡ Auto-Record Conversation</span>
+            <span className="text-beak-deep font-semibold">• Full screen</span>
+            <span className="text-beak-deep font-semibold">• Camera on</span>
+            <span className="text-beak-deep font-semibold">• Records automatically</span>
           </div>
         </div>
       </div>
@@ -202,10 +202,10 @@ export default function SystemCheck({
           <div className="flex items-start justify-between flex-wrap gap-4 pb-4 border-b border-line">
             <div>
               <h2 className="font-serif font-normal text-xl text-ink flex items-center gap-2">
-                <span>🎯</span> Practice Mode Selected
+                Practice
               </h2>
               <p className="text-xs text-stone-muted mt-1">
-                You can immediately enter the studio. Camera is optional and can be toggled on/off during practice.
+                You can start right away. Turn on your camera any time to get eye-contact and body-language feedback.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -214,42 +214,39 @@ export default function SystemCheck({
                 disabled={requestingCamera}
                 className="px-4 py-2 rounded-xl bg-cream hover:bg-line border border-line text-xs font-semibold text-ink transition-colors"
               >
-                {cameraActive ? "✓ Camera Connected" : "Test Camera (Optional)"}
+                {cameraActive ? "✓ Camera ready" : "Check your camera (optional)"}
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-2xl bg-cream/60 border border-line space-y-1">
-              <span className="text-lg">🔓</span>
-              <h4 className="text-xs font-bold text-ink">No Screen Lock</h4>
+              <h4 className="text-xs font-bold text-ink">Your normal window</h4>
               <p className="text-[11px] text-stone-muted">
-                You stay in your normal browser window. Check notes or reference materials freely.
+                Nothing goes full screen, and you can glance at your notes.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-cream/60 border border-line space-y-1">
-              <span className="text-lg">📹</span>
-              <h4 className="text-xs font-bold text-ink">Camera On/Off Anytime</h4>
+              <h4 className="text-xs font-bold text-ink">Camera when you want it</h4>
               <p className="text-[11px] text-stone-muted">
-                Toggle camera preview on or off during each question at your preference.
+                Turn it on for body-language feedback, or leave it off.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-cream/60 border border-line space-y-1">
-              <span className="text-lg">🎙️</span>
-              <h4 className="text-xs font-bold text-ink">Tap To Record</h4>
+              <h4 className="text-xs font-bold text-ink">Tap to record</h4>
               <p className="text-[11px] text-stone-muted">
-                Think first, then tap the microphone button when you are ready to answer.
+                Take a moment to think, then tap the mic when you&apos;re ready.
               </p>
             </div>
           </div>
 
           <button
             onClick={() => onStartInterview("practice")}
-            className="w-full py-4 px-6 rounded-2xl bg-moss hover:bg-moss-deep text-white font-semibold text-sm uppercase tracking-wider transition-all duration-300 shadow-xl shadow-moss-light/25 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 rounded-2xl bg-moss hover:bg-moss-deep text-cream font-semibold text-base transition-all duration-300 shadow-xl shadow-moss-light/25 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
           >
-            <span>Start Casual Practice Studio</span>
+            <span>Start practice</span>
             <span>→</span>
           </button>
         </div>
@@ -261,16 +258,16 @@ export default function SystemCheck({
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-line mb-4">
                 <h2 className="font-serif font-normal text-lg text-ink flex items-center gap-2">
-                  <span>📹</span> Mandatory Hardware Check
+                  Camera and microphone
                 </h2>
                 <span
-                  className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
                     cameraActive && micActive
                       ? "bg-moss-light/20 text-moss border border-moss-light/40"
                       : "bg-beak/20 text-beak-deep border border-beak/40"
                   }`}
                 >
-                  {cameraActive && micActive ? "PASSED" : "REQUIRED"}
+                  {cameraActive && micActive ? "Ready" : "Needed"}
                 </span>
               </div>
 
@@ -285,33 +282,33 @@ export default function SystemCheck({
                       muted
                       className="w-full h-full object-cover -scale-x-100"
                     />
-                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-mono text-moss-light border border-moss-light/30 flex items-center gap-1.5">
+                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[11px] font-mono text-moss border border-moss-light/30 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-moss-light animate-pulse" />
-                      Webcam Online
+                      Camera on
                     </div>
                   </>
                 ) : (
                   <div className="text-center p-6 space-y-3">
                     <div className="w-12 h-12 rounded-2xl bg-cream border border-line flex items-center justify-center mx-auto text-xl text-stone-muted">
-                      📷
+                      <span className="w-3 h-3 rounded-full bg-stone-soft" aria-hidden="true" />
                     </div>
                     <p className="text-xs text-stone-muted max-w-xs">
-                      Webcam is mandatory for the serious interview simulation.
+                      A real interview needs your camera and microphone, so Tota can give you body-language feedback.
                     </p>
                     <button
                       onClick={handleEnableMedia}
                       disabled={requestingCamera}
                       className="px-5 py-2.5 rounded-xl bg-moss hover:bg-moss-light text-xs font-bold text-white transition-all shadow-lg shadow-moss/30"
                     >
-                      {requestingCamera ? "Connecting..." : "Enable Camera & Mic"}
+                      {requestingCamera ? "Connecting…" : "Turn on camera and mic"}
                     </button>
                   </div>
                 )}
               </div>
 
               {cameraError && (
-                <p className="mt-2 text-xs text-beak bg-beak-soft border border-beak/30 p-2.5 rounded-xl">
-                  ⚠️ {cameraError}
+                <p className="mt-2 text-xs text-beak-deep bg-beak-soft border border-beak/30 p-2.5 rounded-xl">
+                  {cameraError}
                 </p>
               )}
 
@@ -319,10 +316,10 @@ export default function SystemCheck({
               <div className="mt-5 space-y-2">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-ink/80 flex items-center gap-1.5">
-                    <span>🎙️</span> Microphone Sensitivity
+                    Microphone level
                   </span>
                   <span className={micActive ? "text-moss font-bold" : "text-stone-soft"}>
-                    {micActive ? `${micVolume}%` : "Not Connected"}
+                    {micActive ? `${micVolume}%` : "Not connected"}
                   </span>
                 </div>
                 <div className="h-3 w-full bg-cream rounded-full overflow-hidden p-0.5 border border-line">
@@ -332,7 +329,7 @@ export default function SystemCheck({
                   />
                 </div>
                 <p className="text-[11px] text-stone-soft">
-                  Speak into your mic to ensure audio levels register.
+                  Say a few words. The bar should move as you speak.
                 </p>
               </div>
             </div>
@@ -344,7 +341,7 @@ export default function SystemCheck({
                   disabled={requestingCamera}
                   className="w-full py-3 rounded-xl bg-cream hover:bg-line border border-line text-xs font-bold text-ink transition-colors flex items-center justify-center gap-2"
                 >
-                  <span>🔑</span> Grant Access to Begin
+                  Allow camera and mic
                 </button>
               )}
             </div>
@@ -355,40 +352,35 @@ export default function SystemCheck({
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-line">
                 <h2 className="font-serif font-normal text-lg text-ink flex items-center gap-2">
-                  <span>🛡️</span> AI Proctored Security Rules
+                  What to expect
                 </h2>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-beak/15 text-beak-deep border border-beak/30">
-                  ENFORCED
-                </span>
+
               </div>
 
               <div className="space-y-2.5">
                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-cream/60 border border-line">
-                  <span className="text-base shrink-0">🖥️</span>
                   <div>
-                    <h3 className="text-xs font-bold text-ink">Full Screen Takeover</h3>
+                    <h3 className="text-xs font-bold text-ink">Full screen, like a real call</h3>
                     <p className="text-[11px] text-stone-muted">
-                      Locks into fullscreen. Exiting triggers an instant security violation.
+                      The interview fills your screen. If you leave full screen, it&apos;s noted in your report.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-cream/60 border border-line">
-                  <span className="text-base shrink-0">⚡</span>
                   <div>
-                    <h3 className="text-xs font-bold text-ink">Hands-Free Conversation Recording</h3>
+                    <h3 className="text-xs font-bold text-ink">Tota records automatically</h3>
                     <p className="text-[11px] text-stone-muted">
-                      Parrot speaks the prompt out loud, then automatically starts recording your answer. No manual buttons needed.
+                      Tota asks each question out loud, then starts recording your answer. No buttons to press.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-cream/60 border border-line">
-                  <span className="text-base shrink-0">🚫</span>
                   <div>
-                    <h3 className="text-xs font-bold text-ink">Tab Switching & Clipboard Blocked</h3>
+                    <h3 className="text-xs font-bold text-ink">No notes or other tabs</h3>
                     <p className="text-[11px] text-stone-muted">
-                      Tab switches and copy/paste are blocked and recorded in your report.
+                      Copy and paste are turned off, and switching tabs is noted in your report.
                     </p>
                   </div>
                 </div>
@@ -404,20 +396,20 @@ export default function SystemCheck({
                   className="mt-0.5 w-4 h-4 rounded border-stone-soft/40 bg-cream text-moss focus:ring-moss-light cursor-pointer"
                 />
                 <span className="text-xs text-ink/80 leading-relaxed">
-                  I agree to the fullscreen lock, mandatory video, and hands-free automatic conversation recording.
+                  I&apos;m ready: full screen, camera on, and automatic recording.
                 </span>
               </label>
 
               <button
                 onClick={() => onStartInterview("serious")}
                 disabled={!canProceedSerious}
-                className={`w-full py-4 px-6 rounded-2xl text-sm font-semibold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl ${
+                className={`w-full py-4 px-6 rounded-2xl text-base font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl ${
                   canProceedSerious
-                    ? "bg-beak hover:bg-beak-deep text-white shadow-beak/30 hover:scale-[1.02]"
+                    ? "bg-ink hover:bg-moss-deep text-cream shadow-ink/20 hover:scale-[1.02]"
                     : "bg-line text-stone-soft cursor-not-allowed border border-line"
                 }`}
               >
-                <span>Enter Serious Proctored Studio</span>
+                <span>Start real interview</span>
                 <span>→</span>
               </button>
             </div>

@@ -52,6 +52,10 @@ export async function GET(
             totalFillerWordCount: report.totalFillerWordCount,
             avgPace: report.avgPace,
             overallSummary: report.overallSummary,
+            overallBand: report.overallBand,
+            avgEyeContactPercent: report.avgEyeContactPercent ?? null,
+            overallMovementScore: report.overallMovementScore ?? null,
+            bodyLanguageReport: report.bodyLanguageReport ?? null,
           }
         : null,
     });

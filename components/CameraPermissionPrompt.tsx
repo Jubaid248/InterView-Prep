@@ -45,9 +45,9 @@ export default function CameraPermissionPrompt({
               Want body language feedback too?
             </h2>
             <p className="text-sm text-ink/80 leading-relaxed">
-              Parrot can analyze your{" "}
+              Tota can check your{" "}
               <span className="text-moss-deep font-semibold">eye contact</span> and{" "}
-              <span className="text-moss-deep font-semibold">movement</span> during each answer — entirely on your device.
+              <span className="text-moss-deep font-semibold">posture</span> during each answer, entirely on your device.
             </p>
           </div>
 

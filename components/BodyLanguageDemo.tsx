@@ -75,7 +75,7 @@ export default function BodyLanguageDemo() {
               className={`px-3 py-1 rounded-full text-xs font-mono font-bold transition-all border ${
                 simulationState === "confident"
                   ? "bg-moss-light/15 border-moss-light/40 text-moss"
-                  : "bg-amber-500/15 border-amber-500/40 text-amber-700"
+                  : "bg-amber-500/15 border-amber-500/40 text-amber-800"
               }`}
             >
               Mode: {simulationState === "confident" ? "🎯 Confident Executive" : "⚠️ Nervous / Looking Away"} (Click to Toggle)
@@ -113,7 +113,7 @@ export default function BodyLanguageDemo() {
                       }`}
                     />
                     {/* Head Yaw Guide */}
-                    <span className="absolute -bottom-6 text-[9px] font-mono text-stone-muted uppercase tracking-widest">
+                    <span className="absolute -bottom-6 text-[11px] font-mono text-stone-muted uppercase tracking-widest">
                       Head Yaw: {simulationState === "confident" ? "+1.8° [Centered]" : "-18.4° [Looking Off-Screen]"}
                     </span>
                   </div>
@@ -121,11 +121,11 @@ export default function BodyLanguageDemo() {
 
                 {/* Top Overlay Badges */}
                 <div className="relative z-10 flex items-center justify-between">
-                  <div className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono text-[#00f2c3] flex items-center gap-1.5">
+                  <div className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-mono text-[#00f2c3] flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-moss" />
                     <span>MediaPipe Vision Pipeline</span>
                   </div>
-                  <div className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-mono text-line">
+                  <div className="px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-mono text-line">
                     FPS: 30 · 100% Client-Side
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function BodyLanguageDemo() {
             {/* Right: Live Body Language Summary Metrics & Mascot */}
             <div className="lg:col-span-5 space-y-4">
               <div className="space-y-1">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-moss font-bold">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-moss font-bold">
                   REAL-TIME VISION METRICS
                 </span>
                 <h3 className="text-xl font-bold text-ink">
@@ -173,7 +173,7 @@ export default function BodyLanguageDemo() {
                   <span className="flex items-center gap-1.5 text-ink">
                     <span>👀</span> Eye Contact Consistency
                   </span>
-                  <span className={simulationState === "confident" ? "text-moss" : "text-amber-600"}>
+                  <span className={simulationState === "confident" ? "text-moss" : "text-amber-800"}>
                     {simulationState === "confident" ? "94% (Target: >75%)" : "48% (Needs focus)"}
                   </span>
                 </div>
@@ -198,7 +198,7 @@ export default function BodyLanguageDemo() {
                   <span className="flex items-center gap-1.5 text-ink">
                     <span>🧘</span> Composure & Stability
                   </span>
-                  <span className={simulationState === "confident" ? "text-moss" : "text-amber-600"}>
+                  <span className={simulationState === "confident" ? "text-moss" : "text-amber-800"}>
                     {simulationState === "confident" ? "Low Movement (Calm)" : "High Jitter (Nervous)"}
                   </span>
                 </div>
@@ -248,7 +248,7 @@ export default function BodyLanguageDemo() {
             <div className="lg:col-span-8 space-y-4">
               {/* Question */}
               <div className="p-4 rounded-2xl bg-cream border border-line space-y-1.5">
-                <div className="text-[10px] font-mono uppercase tracking-widest text-moss font-bold">
+                <div className="text-[11px] font-mono uppercase tracking-widest text-moss font-bold">
                   Target Role: Staff Software Engineer @ Stripe
                 </div>
                 <h4 className="text-sm sm:text-base font-bold text-ink">
@@ -306,7 +306,7 @@ export default function BodyLanguageDemo() {
             {/* Right: STAR Scores */}
             <div className="lg:col-span-4 space-y-3">
               <div className="p-4 rounded-2xl bg-cream/60 border border-line space-y-2">
-                <span className="text-[10px] font-mono text-moss font-bold uppercase">Reasoning Assessment</span>
+                <span className="text-[11px] font-mono text-moss font-bold uppercase">Reasoning Assessment</span>
                 <div className="text-2xl font-semibold text-ink">9.6 / 10</div>
                 <div className="text-xs text-stone-muted">
                   Exceptional STAR execution. Metrics quantified ($1.2M saved, 45ms latency) without hesitation.
@@ -315,11 +315,11 @@ export default function BodyLanguageDemo() {
 
               <div className="grid grid-cols-2 gap-2 text-center text-xs">
                 <div className="p-3 rounded-xl bg-cream border border-line">
-                  <div className="text-[10px] text-stone-muted font-mono">STAR Structure</div>
+                  <div className="text-[11px] text-stone-muted font-mono">STAR Structure</div>
                   <div className="text-base font-bold text-moss">98%</div>
                 </div>
                 <div className="p-3 rounded-xl bg-cream border border-line">
-                  <div className="text-[10px] text-stone-muted font-mono">Clarity & Pace</div>
+                  <div className="text-[11px] text-stone-muted font-mono">Clarity & Pace</div>
                   <div className="text-base font-bold text-tealbird-deep">142 WPM</div>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function BodyLanguageDemo() {
           <div className="pt-6 space-y-6 relative z-10">
             <div className="p-5 rounded-2xl bg-gradient-to-r from-tealbird/10 via-tealbird/10 to-cream border border-tealbird/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <span className="px-2.5 py-1 rounded-full bg-tealbird-light/20 text-moss text-[10px] font-mono font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-full bg-tealbird-light/20 text-moss text-[11px] font-mono font-bold uppercase tracking-wider">
                   Official Session Debrief
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold text-ink mt-1.5">
@@ -378,7 +378,7 @@ export default function BodyLanguageDemo() {
                     <span><strong>Posture:</strong> Maintained upright open shoulders.</span>
                   </li>
                   <li className="flex items-start gap-1.5">
-                    <span className="text-amber-600">!</span>
+                    <span className="text-amber-800">!</span>
                     <span><strong>Movement:</strong> Occasional head swivel when pausing.</span>
                   </li>
                 </ul>

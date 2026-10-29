@@ -62,7 +62,7 @@ export default function QuestionAudioControl({
         <button
           type="button"
           onClick={onStop}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-700 hover:bg-amber-500/30 text-xs font-bold transition-all shadow-md shadow-amber-500/10"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-800 hover:bg-amber-500/30 text-xs font-bold transition-all shadow-md shadow-amber-500/10"
         >
           {/* Animated sound wave bars */}
           <div className="flex items-end gap-0.5 h-3.5">
@@ -71,17 +71,16 @@ export default function QuestionAudioControl({
             <span className="w-1 bg-amber-400 rounded-full animate-bounce [animation-delay:300ms] h-3" />
             <span className="w-1 bg-amber-400 rounded-full animate-bounce [animation-delay:75ms] h-2.5" />
           </div>
-          <span>Stop Voice</span>
+          <span>Stop</span>
         </button>
       ) : (
         <button
           type="button"
           onClick={onSpeak}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream border border-line hover:border-amber-400/40 text-ink/80 hover:text-amber-700 text-xs font-semibold transition-all hover:bg-line"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream border border-line hover:border-amber-400/40 text-ink/80 hover:text-amber-800 text-xs font-semibold transition-all hover:bg-line"
           title="Read this question aloud"
         >
-          <span className="text-xs">🔊</span>
-          <span>Listen</span>
+          <span>Hear it again</span>
         </button>
       )}
 
@@ -94,10 +93,10 @@ export default function QuestionAudioControl({
             ? "border-moss-light/30 bg-moss-light/10 text-moss hover:bg-moss-light/20"
             : "border-line bg-cream/60 text-stone-muted hover:text-ink"
         }`}
-        title={audioEnabled ? "Audio questions enabled (click to mute)" : "Audio questions muted (click to enable)"}
+        title={audioEnabled ? "Tota reads each question aloud. Click to turn off." : "Questions are silent. Click to have Tota read them aloud."}
       >
         <span className="text-xs">{audioEnabled ? "✓" : "✕"}</span>
-        <span>Auto-Read {audioEnabled ? "ON" : "OFF"}</span>
+        <span>Read aloud {audioEnabled ? "on" : "off"}</span>
       </button>
     </div>
   );

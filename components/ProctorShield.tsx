@@ -106,7 +106,7 @@ export function useProctorShield({ enabled, onViolation }: UseProctorShieldOptio
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setState((prev) => ({ ...prev, isFocused: false }));
-        addViolation("tab_switch", "Tab switch detected — this has been recorded.");
+        addViolation("tab_switch", "You switched tabs. It's noted in your report.");
       } else {
         setState((prev) => ({ ...prev, isFocused: true }));
       }
@@ -127,7 +127,7 @@ export function useProctorShield({ enabled, onViolation }: UseProctorShieldOptio
       if (!isFs) {
         addViolation(
           "fullscreen_exit",
-          "Fullscreen exited — return to fullscreen to continue."
+          "You left full screen. Go back to carry on."
         );
       }
     };
@@ -135,18 +135,18 @@ export function useProctorShield({ enabled, onViolation }: UseProctorShieldOptio
     // --- Copy / Paste blocking ---
     const handleCopy = (e: ClipboardEvent) => {
       e.preventDefault();
-      addViolation("copy", "Copy action blocked and recorded.");
+      addViolation("copy", "Copying is turned off during a real interview.");
     };
 
     const handlePaste = (e: ClipboardEvent) => {
       e.preventDefault();
-      addViolation("paste", "Paste action blocked and recorded.");
+      addViolation("paste", "Pasting is turned off during a real interview.");
     };
 
     // --- Right-click blocking ---
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
-      addViolation("right_click", "Right-click is disabled during the interview.");
+      addViolation("right_click", "Right-click is turned off during a real interview.");
     };
 
     // --- DevTools detection (resize heuristic) ---
@@ -155,7 +155,7 @@ export function useProctorShield({ enabled, onViolation }: UseProctorShieldOptio
       const widthThreshold = window.outerWidth - window.innerWidth > 200;
       const heightThreshold = window.outerHeight - window.innerHeight > 200;
       if (widthThreshold || heightThreshold) {
-        addViolation("devtools", "Developer tools may have been opened — recorded.");
+        addViolation("devtools", "Developer tools look open. It's noted in your report.");
       }
     };
 

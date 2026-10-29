@@ -25,7 +25,7 @@ export default function ProgressBar({
           <span className="text-stone-soft">•</span>
           <span className="text-moss font-semibold">{percentage}%</span>
           {awaitingFollowUp && (
-            <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 text-[10px] font-sans uppercase font-bold tracking-wider">
+            <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 text-[11px] font-sans uppercase font-bold tracking-wider">
               Follow-up Active
             </span>
           )}

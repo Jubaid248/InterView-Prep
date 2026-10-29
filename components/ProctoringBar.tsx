@@ -15,6 +15,14 @@ interface ProctoringBarProps {
   trackName?: string;
 }
 
+const TRACK_NAMES: Record<string, string> = {
+  "mock-interview": "Mock interview",
+  "ielts-speaking": "IELTS Speaking",
+  "communication-builder": "Communication practice",
+  "debate-practice": "Debate practice",
+  "negotiation-practice": "Negotiation practice",
+};
+
 export default function ProctoringBar({
   currentQuestionIndex,
   totalQuestions,
@@ -53,15 +61,13 @@ export default function ProctoringBar({
             <span className="w-2.5 h-2.5 rounded-full bg-moss-light" aria-hidden="true" />
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-ink tracking-wider uppercase">
-                  Parrot
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-moss-light/20 text-moss-deep font-bold border border-moss-light/30">
-                  PROCTORED
+                <span className="text-sm font-semibold text-ink">Parrot</span>
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-moss-light/20 text-moss-deep font-semibold border border-moss-light/30">
+                  Real interview
                 </span>
               </div>
-              <span className="text-[10px] text-stone-muted font-mono hidden sm:inline">
-                {trackName ? trackName.replace("-", " ").toUpperCase() : "PROCTORED INTERVIEW"}
+              <span className="text-[11px] text-stone-muted font-mono hidden sm:inline">
+                {TRACK_NAMES[trackName || ""] || "Mock interview"}
               </span>
             </div>
           </div>
@@ -102,25 +108,24 @@ export default function ProctoringBar({
         {/* Right: Security & Proctor Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Live REC Indicator */}
-          <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-beak/10 border border-beak/30 text-[10px] font-mono font-bold text-beak">
+          <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-beak/10 border border-beak/30 text-[11px] font-mono font-bold text-beak-deep">
             <span className="w-2 h-2 rounded-full bg-beak animate-pulse" />
-            <span className="hidden sm:inline">REC</span>
+            <span className="hidden sm:inline">Recording</span>
           </div>
 
           {/* Violations Counter Badge */}
           <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold border transition-colors ${
               totalViolations === 0
                 ? "bg-moss-light/10 border-moss-light/30 text-moss"
                 : totalViolations < 3
-                ? "bg-amber-500/15 border-amber-500/40 text-amber-700 animate-bounce"
+                ? "bg-amber-500/15 border-amber-500/40 text-amber-800 animate-bounce"
                 : "bg-beak/20 border-beak/50 text-beak-deep animate-pulse"
             }`}
-            title="Anti-cheating violation monitor"
+            title="Focus check: leaving full screen or switching tabs is noted in your report"
           >
-            <span>🛡️</span>
             <span>
-              {totalViolations === 0 ? "0 Violations" : `${totalViolations} Alert${totalViolations > 1 ? "s" : ""}`}
+              {totalViolations === 0 ? "Focused" : `${totalViolations} focus note${totalViolations > 1 ? "s" : ""}`}
             </span>
           </div>
 
@@ -130,9 +135,9 @@ export default function ProctoringBar({
             className={`p-1.5 sm:px-2.5 sm:py-1 rounded-xl border text-xs font-mono font-medium transition-colors flex items-center gap-1.5 ${
               isFullscreen
                 ? "bg-cream border-line text-stone-muted hover:text-ink"
-                : "bg-amber-500/20 border-amber-500/50 text-amber-700 animate-pulse hover:bg-amber-500/30"
+                : "bg-amber-500/20 border-amber-500/50 text-amber-800 animate-pulse hover:bg-amber-500/30"
             }`}
-            title={isFullscreen ? "Fullscreen active" : "Enter Fullscreen"}
+            title={isFullscreen ? "Full screen on" : "Go full screen"}
           >
             <svg
               className="w-4 h-4"
@@ -157,7 +162,7 @@ export default function ProctoringBar({
               )}
             </svg>
             <span className="hidden md:inline">
-              {isFullscreen ? "Fullscreen" : "Maximize"}
+              {isFullscreen ? "Full screen" : "Go full screen"}
             </span>
           </button>
 
@@ -165,7 +170,7 @@ export default function ProctoringBar({
           <button
             onClick={() => onToggleAudio(!audioEnabled)}
             className="p-1.5 rounded-xl bg-cream border border-line text-ink/80 hover:text-ink transition-colors"
-            title={audioEnabled ? "Mute Parrot voice" : "Unmute Parrot voice"}
+            title={audioEnabled ? "Mute Tota's voice" : "Unmute Tota's voice"}
           >
             {audioEnabled ? "🔊" : "🔇"}
           </button>
@@ -184,21 +189,20 @@ export default function ProctoringBar({
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-md">
           <div className="max-w-md w-full bg-cream border border-beak/40 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-beak">
-              <span className="text-2xl">⚠️</span>
+            <div className="flex items-center gap-3 text-beak-deep">
               <h4 className="text-base font-bold text-ink">
-                Leave Proctored Interview?
+                Leave this interview?
               </h4>
             </div>
             <p className="text-xs text-ink/80 leading-relaxed">
-              Exiting now will terminate your session and Parrot will not be able to evaluate remaining questions. Are you sure you want to exit?
+              If you leave now, Tota won&apos;t be able to give feedback on the questions you haven&apos;t answered yet.
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowExitConfirm(false)}
                 className="px-4 py-2 rounded-xl bg-line hover:bg-line text-xs font-semibold text-ink transition-colors"
               >
-                Continue Interview
+                Keep going
               </button>
               <button
                 onClick={() => {
@@ -207,7 +211,7 @@ export default function ProctoringBar({
                 }}
                 className="px-4 py-2 rounded-xl bg-beak hover:bg-beak text-xs font-bold text-white transition-colors"
               >
-                Exit Session
+                Leave interview
               </button>
             </div>
           </div>
