@@ -178,46 +178,54 @@ export function BodyLanguageReportCard({ report, perQuestion = [] }: { report: B
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {statTiles.map((s) => (
-          <div key={s.label} className="rounded-xl bg-white border border-line p-3">
-            <p className="text-[11px] text-stone-muted">{s.label}</p>
-            <p className={`font-serif text-2xl ${s.bad ? "text-beak-deep" : "text-ink"}`}>{s.value}</p>
-            <p className="text-[11px] text-stone-soft">{s.note}</p>
-          </div>
-        ))}
+      <div>
+        <p className="text-sm font-semibold text-ink mb-1">What we noticed</p>
+        <ul>
+          {insights.map((i) => (
+            <InsightRow key={i.title} insight={i} />
+          ))}
+        </ul>
       </div>
 
-      {perQuestion.length > 1 && <PerQuestionBreakdown rows={perQuestion} />}
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <p className="text-sm font-semibold text-ink mb-1">What we noticed</p>
-          <ul>
-            {insights.map((i) => (
-              <InsightRow key={i.title} insight={i} />
+      {/* The raw numbers are useful but noisy, so they stay folded away */}
+      <details className="group border-t border-line pt-4">
+        <summary className="cursor-pointer list-none text-sm font-semibold text-moss hover:text-moss-deep [&::-webkit-details-marker]:hidden">
+          <span className="group-open:hidden">Show all measurements</span>
+          <span className="hidden group-open:inline">Hide measurements</span>
+        </summary>
+        <div className="mt-4 space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {statTiles.map((s) => (
+              <div key={s.label} className="rounded-xl bg-white border border-line p-3">
+                <p className="text-[11px] text-stone-muted">{s.label}</p>
+                <p className={`font-serif text-2xl ${s.bad ? "text-beak-deep" : "text-ink"}`}>{s.value}</p>
+                <p className="text-[11px] text-stone-soft">{s.note}</p>
+              </div>
             ))}
-          </ul>
+          </div>
+
+          {perQuestion.length > 1 && <PerQuestionBreakdown rows={perQuestion} />}
+
+          <div>
+            <p className="text-sm font-semibold text-ink mb-2">Key moments</p>
+            {moments.length === 0 ? (
+              <p className="text-xs text-stone-muted">No long look-aways, closed eyes or face touches. Nice.</p>
+            ) : (
+              <ol className="space-y-1.5">
+                {moments.slice(0, 10).map((m, idx) => (
+                  <li key={idx} className="flex items-center gap-2 text-xs">
+                    <span className="font-mono text-stone-soft w-20 shrink-0">{momentLabel(m)}</span>
+                    <span className="text-ink">
+                      {MOMENT_TEXT[m.kind]}
+                      {m.durationSec ? <span className="text-stone-muted"> · {m.durationSec}s</span> : null}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
-        <div className="lg:col-span-2">
-          <p className="text-sm font-semibold text-ink mb-2">Key moments</p>
-          {moments.length === 0 ? (
-            <p className="text-xs text-stone-muted">No long look-aways, closed eyes or face touches. Nice.</p>
-          ) : (
-            <ol className="space-y-1.5">
-              {moments.slice(0, 10).map((m, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-xs">
-                  <span className="font-mono text-stone-soft w-20 shrink-0">{momentLabel(m)}</span>
-                  <span className="text-ink">
-                    {MOMENT_TEXT[m.kind]}
-                    {m.durationSec ? <span className="text-stone-muted"> · {m.durationSec}s</span> : null}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      </div>
+      </details>
     </div>
   );
 }

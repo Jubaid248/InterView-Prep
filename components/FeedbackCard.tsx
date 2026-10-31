@@ -11,34 +11,12 @@ interface FeedbackCardProps {
 }
 
 // Older IELTS sessions had no stored part, so fall back to their fixed 5-question layout
-function getIeltsPartLabel(
-  questionNumber: number,
-  detail?: FeedbackCardProps["detail"]
-): { label: string; color: string; bg: string; border: string } {
+function getIeltsPartLabel(questionNumber: number, detail?: FeedbackCardProps["detail"]): string {
   const part = detail?.part ?? (questionNumber <= 2 ? 1 : questionNumber === 3 ? 2 : 3);
   const topic = detail?.topic ? ` · ${detail.topic}` : "";
-  if (part === 1) {
-    return {
-      label: `Part 1 — Introduction${topic}`,
-      color: "text-moss-deep",
-      bg: "bg-moss-light/15",
-      border: "border-moss-light/30",
-    };
-  }
-  if (part === 2) {
-    return {
-      label: detail?.kind === "rounding-off" ? "Part 2 — Rounding-off question" : "Part 2 — Cue Card Long Turn",
-      color: "text-tealbird-deep",
-      bg: "bg-tealbird/15",
-      border: "border-tealbird/30",
-    };
-  }
-  return {
-    label: `Part 3 — Discussion${topic}`,
-    color: "text-moss",
-    bg: "bg-moss-light/15",
-    border: "border-moss-light/30",
-  };
+  if (part === 1) return `Part 1 · Introduction${topic}`;
+  if (part === 2) return detail?.kind === "rounding-off" ? "Part 2 · Rounding-off question" : "Part 2 · Cue card";
+  return `Part 3 · Discussion${topic}`;
 }
 
 const FRAMEWORK_LABELS: Record<string, string> = {
@@ -48,319 +26,211 @@ const FRAMEWORK_LABELS: Record<string, string> = {
 };
 
 function bandColor(band: number): string {
-  if (band >= 7.5) return "text-moss";
   if (band >= 6.5) return "text-moss";
   if (band >= 5.5) return "text-amber-800";
   return "text-beak-deep";
 }
 
-export default function FeedbackCard({
-  feedback,
-  questionNumber,
-  track,
-  detail,
-}: FeedbackCardProps) {
+/** 0–10 relevance; older reports stored it out of 100. */
+export function relevanceOutOf10(score: number): number {
+  return score > 10 ? Math.round(score / 10) : Math.round(score);
+}
+
+/** One compact, expandable row per question: status and a one-line fix up front, everything else on click. */
+export default function FeedbackCard({ feedback, questionNumber, track, detail }: FeedbackCardProps) {
   const isIelts = track === "ielts-speaking";
+  const relevance10 = relevanceOutOf10(feedback.relevanceScore);
+  const overallBand = typeof feedback.overallBand === "number" ? feedback.overallBand : null;
+
+  const promptLabel = isIelts
+    ? getIeltsPartLabel(questionNumber, detail)
+    : (track === "debate-practice" || track === "negotiation-practice") && detail?.framework
+    ? detail.framework
+    : track === "communication-builder" && detail?.framework
+    ? FRAMEWORK_LABELS[detail.framework] || `${detail.framework} method`
+    : track === "mock-interview" && detail?.stage
+    ? detail.stage
+    : null;
+
+  // IELTS rows are judged by band; everything else by relevance
+  const good = isIelts ? (overallBand ?? 0) >= 6.5 : relevance10 >= 7;
+  const oneLiner = good ? feedback.whatWorked || feedback.whatToImprove : feedback.whatToImprove || feedback.whatWorked;
 
   const paceColor =
     feedback.speakingPace > 0 && feedback.speakingPace < 120
       ? "text-amber-800"
       : feedback.speakingPace > 160
-        ? "text-beak-deep"
-        : "text-moss";
+      ? "text-beak-deep"
+      : "text-ink";
 
-  const relevance10 =
-    feedback.relevanceScore > 10 ? Math.round(feedback.relevanceScore / 10) : Math.round(feedback.relevanceScore);
-
-  const relevanceColor =
-    relevance10 >= 8
-      ? "text-moss bg-moss-light/15 border-moss-light/30"
-      : relevance10 >= 5
-        ? "text-amber-800 bg-amber-500/15 border-amber-500/30"
-        : "text-beak-deep bg-beak/15 border-beak/30";
-
-  const partInfo = isIelts ? getIeltsPartLabel(questionNumber, detail) : null;
-  const promptLabel =
-    (track === "debate-practice" || track === "negotiation-practice") && detail?.framework
-      ? detail.framework
-      : track === "communication-builder" && detail?.framework
-      ? FRAMEWORK_LABELS[detail.framework] || `${detail.framework} method`
-      : track === "mock-interview" && detail?.stage
-      ? detail.stage
-      : null;
-  const overallBand = typeof feedback.overallBand === "number" ? feedback.overallBand : null;
+  const bodyLanguage = (feedback as any).bodyLanguage;
+  const legacyBody = !bodyLanguage && (typeof feedback.eyeContactPercent === "number" || feedback.movementScore);
 
   return (
-    <div className="glass-card rounded-3xl overflow-hidden border border-line shadow-2xl space-y-0">
-      {/* Header Bar */}
-      <div className="px-6 py-5 border-b border-line bg-cream/60 backdrop-blur-md">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="space-y-1">
-            {isIelts && partInfo ? (
-              <div className="flex items-center gap-2">
-                <span className={`text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full border ${partInfo.bg} ${partInfo.border} ${partInfo.color}`}>
-                  {partInfo.label}
-                </span>
-              </div>
-            ) : (
-              <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-                {promptLabel ? `${questionNumber}. ${promptLabel}` : `Prompt ${questionNumber} Feedback`}
-              </h3>
-            )}
-            <p className="text-xs text-ink/80 leading-snug font-medium">{feedback.questionText}</p>
-          </div>
-
+    <details className="group border-t border-line first:border-t-0">
+      <summary className="flex cursor-pointer list-none items-start gap-4 py-4 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0 flex-1 space-y-1">
+          {promptLabel && (
+            <p className="text-[11px] font-mono uppercase tracking-[0.12em] text-stone-muted">{promptLabel}</p>
+          )}
+          <p className="text-sm font-semibold text-ink leading-snug">
+            {questionNumber}. {feedback.questionText}
+          </p>
+          {oneLiner && (
+            <p className="text-sm text-stone-muted leading-snug line-clamp-2 group-open:line-clamp-none">
+              {!good && <span className="font-semibold text-amber-800">Fix: </span>}
+              {oneLiner}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2 pt-0.5">
           {isIelts && overallBand !== null ? (
-            <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-tealbird/10 border border-tealbird/30">
-              <div className="flex flex-col items-end">
-                <span className={`text-3xl font-semibold leading-none ${bandColor(overallBand)}`}>
-                  {overallBand}
-                </span>
-                <span className="text-[11px] text-tealbird-deep">Estimated band</span>
-              </div>
-            </div>
+            <span className={`rounded-full border border-line bg-cream/60 px-3 py-1 text-xs font-semibold ${bandColor(overallBand)}`}>
+              Band {overallBand}
+            </span>
           ) : !isIelts ? (
-            <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${relevanceColor}`}>
-              Relevance {relevance10}/10
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                good ? "bg-moss-light/15 text-moss" : "bg-amber-500/15 text-amber-800"
+              }`}
+            >
+              {good ? "Good" : "Needs work"}
             </span>
           ) : null}
+          <svg
+            className="h-4 w-4 text-stone-muted transition-transform group-open:rotate-180"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+          </svg>
         </div>
-      </div>
+      </summary>
 
-      <div className="p-6 sm:p-8 space-y-6">
-        {/* Answer Transcript */}
-        <div className="space-y-2">
-          <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
-            What you said
-          </h4>
-          <div className="text-xs sm:text-sm text-ink leading-relaxed bg-cream/60 rounded-2xl p-4 border border-line shadow-inner">
+      <div className="mb-5 space-y-5 rounded-2xl bg-cream/60 p-4 sm:p-5">
+        {/* Numbers for this answer */}
+        {isIelts ? (
+          <p className="text-xs text-stone-muted">
+            {[
+              ["Fluency", feedback.fluencyCoherence],
+              ["Vocabulary", feedback.lexicalResource],
+              ["Grammar", feedback.grammaticalRange],
+              ["Pronunciation", feedback.pronunciation],
+            ]
+              .map(([label, v]) => `${label} ${typeof v === "number" ? v : "—"}`)
+              .join(" · ")}
+          </p>
+        ) : (
+          <p className="text-xs text-stone-muted">
+            <span className={feedback.fillerWordCount > 3 ? "text-beak-deep" : "text-ink"}>
+              {feedback.fillerWordCount} filler word{feedback.fillerWordCount === 1 ? "" : "s"}
+            </span>
+            {" · "}
+            <span className={paceColor}>{feedback.speakingPace ? `${feedback.speakingPace} WPM` : "pace —"}</span>
+            {" · "}
+            <span className="text-ink">Relevance {relevance10}/10</span>
+          </p>
+        )}
+
+        <Section title="What you said">
+          <p className="text-sm text-ink leading-relaxed">
             {highlightFillers(feedback.answerTranscript, feedback.fillerWords)}
-          </div>
-        </div>
+          </p>
+        </Section>
 
-        {/* Follow-up Section */}
         {feedback.followUpText && (
-          <div className="space-y-2 pt-2 border-t border-line">
-            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-moss">
-              Follow-up question and your answer
-            </h4>
-            <p className="text-xs text-moss-deep italic font-medium">
-              &ldquo;{feedback.followUpText}&rdquo;
-            </p>
+          <Section title="Follow-up">
+            <p className="text-sm italic text-moss-deep">&ldquo;{feedback.followUpText}&rdquo;</p>
             {feedback.followUpTranscript && (
-              <div className="text-xs text-ink/80 leading-relaxed bg-cream/60 rounded-2xl p-4 border border-line">
-                {feedback.followUpTranscript}
-              </div>
+              <p className="text-sm text-ink/80 leading-relaxed">{feedback.followUpTranscript}</p>
+            )}
+          </Section>
+        )}
+
+        {/* The row only shows one of these, so give both in full here */}
+        {(feedback.whatWorked || feedback.whatToImprove) && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {feedback.whatWorked && (
+              <Section title="What worked">
+                <p className="text-sm text-ink leading-relaxed">{feedback.whatWorked}</p>
+              </Section>
+            )}
+            {feedback.whatToImprove && (
+              <Section title="What to improve">
+                <p className="text-sm text-ink leading-relaxed">{feedback.whatToImprove}</p>
+              </Section>
             )}
           </div>
         )}
 
-        {/* Criteria Breakdown */}
-        {isIelts ? (
-          <div className="space-y-3 pt-2 border-t border-line">
-            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
-              Band score by criterion
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: "Fluency & Coherence", value: feedback.fluencyCoherence, color: "text-tealbird-deep" },
-                { label: "Lexical Resource", value: feedback.lexicalResource, color: "text-moss-deep" },
-                { label: "Grammar", value: feedback.grammaticalRange, color: "text-moss" },
-                { label: "Pronunciation", value: phenomenonToBand(feedback.pronunciation), color: "text-amber-800" },
-              ].map(({ label, value }) => {
-                const score = typeof value === "number" ? value : null;
-                return (
-                  <div key={label} className="glass-card rounded-2xl p-3 text-center border border-line">
-                    <p className="text-[11px] font-medium text-stone-muted mb-1 leading-tight">{label}</p>
-                    <p className={`text-xl font-semibold ${score !== null ? bandColor(score) : "text-stone-soft"}`}>
-                      {score !== null ? score : "—"}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-3">
-            <div className="glass-card rounded-2xl p-4 text-center border border-line">
-              <p className="text-[11px] font-bold uppercase text-stone-muted mb-1">Filler words</p>
-              <p className={`text-xl font-semibold ${feedback.fillerWordCount > 3 ? "text-beak-deep" : "text-moss"}`}>
-                {feedback.fillerWordCount}
-              </p>
-            </div>
-            <div className="glass-card rounded-2xl p-4 text-center border border-line">
-              <p className="text-[11px] font-bold uppercase text-stone-muted mb-1">Pace (words/min)</p>
-              <p className={`text-xl font-semibold ${paceColor}`}>
-                {feedback.speakingPace || "—"}
-              </p>
-            </div>
-            <div className="glass-card rounded-2xl p-4 text-center border border-line">
-              <p className="text-[11px] font-bold uppercase text-stone-muted mb-1">Relevance</p>
-              <p className={`text-xl font-semibold ${relevance10 >= 7 ? "text-moss" : "text-amber-800"}`}>
-                {relevance10}/10
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* STAR Analysis for Mock Interview */}
         {!isIelts && feedback.starAnalysis && (
-          <div className="space-y-3 pt-2 border-t border-line">
-            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
-              STAR structure
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Section title="STAR structure">
+            <ul className="space-y-1">
               {(["situation", "task", "action", "result"] as const).map((part) => (
-                <div key={part} className="p-3.5 rounded-2xl bg-cream/60 border border-moss-light/20 space-y-1">
-                  <p className="text-[11px] font-semibold text-moss uppercase tracking-wider">
-                    {part}
-                  </p>
-                  <p className="text-xs text-ink/80 leading-relaxed">
-                    {feedback.starAnalysis?.[part] || (
-                      <span className="text-stone-soft italic">Missing from your answer</span>
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Body language and eye movement for this answer */}
-        {(feedback as any).bodyLanguage && (
-          <div className="space-y-3 pt-4 border-t border-line">
-            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-moss-deep">Body language and eye contact</h4>
-            <BodyLanguageAnswerPanel data={(feedback as any).bodyLanguage} />
-          </div>
-        )}
-        {!(feedback as any).bodyLanguage && (typeof feedback.eyeContactPercent === "number" || feedback.movementScore) && (
-          <div className="space-y-3 pt-2 border-t border-line">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-[11px] font-semibold uppercase tracking-widest text-moss-deep flex items-center gap-1.5">
-                Body language
-              </h4>
-              <span className="text-[11px] text-stone-soft">Measured on your device</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {typeof feedback.eyeContactPercent === "number" && (
-                <div className="glass-card rounded-2xl p-4 border border-line flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="text-[11px] font-bold uppercase text-stone-muted">Eye contact</p>
-                    <p className="text-xs text-ink/80">
-                      {feedback.eyeContactPercent >= 70
-                        ? "Great direct camera/screen focus"
-                        : feedback.eyeContactPercent >= 50
-                        ? "Looked away fairly often"
-                        : "Looked away a lot"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`text-2xl font-semibold ${
-                        feedback.eyeContactPercent >= 70
-                          ? "text-moss"
-                          : feedback.eyeContactPercent >= 50
-                          ? "text-amber-800"
-                          : "text-beak-deep"
-                      }`}
-                    >
-                      {feedback.eyeContactPercent}%
-                    </span>
-                    <p className="text-[11px] font-mono text-stone-soft uppercase">Forward Yaw</p>
-                  </div>
-                </div>
-              )}
-
-              {feedback.movementScore && (
-                <div className="glass-card rounded-2xl p-4 border border-line flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="text-[11px] font-bold uppercase text-stone-muted">Head movement</p>
-                    <p className="text-xs text-ink/80">
-                      {feedback.movementScore === "low"
-                        ? "Composed and steady posture"
-                        : feedback.movementScore === "moderate"
-                        ? "Natural conversational motion"
-                        : "High head displacement / fidgeting"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`text-sm font-semibold px-3 py-1 rounded-xl uppercase tracking-wider inline-block ${
-                        feedback.movementScore === "low"
-                          ? "bg-moss-light/15 text-moss border border-moss-light/30"
-                          : feedback.movementScore === "moderate"
-                          ? "bg-moss-light/15 text-moss-deep border border-moss-light/30"
-                          : "bg-amber-500/15 text-amber-800 border border-amber-500/30"
-                      }`}
-                    >
-                      {feedback.movementScore}
-                    </span>
-                    <p className="text-[11px] font-mono text-stone-soft uppercase mt-1">Stability</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* What Worked & What to Improve */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {feedback.whatWorked && (
-            <div className="p-4 rounded-2xl bg-moss-light/10 border border-moss-light/30 space-y-1 backdrop-blur-md">
-              <p className="text-[11px] font-bold text-moss uppercase tracking-wider flex items-center gap-1.5">
-                What worked
-              </p>
-              <p className="text-xs text-ink leading-relaxed">
-                {feedback.whatWorked}
-              </p>
-            </div>
-          )}
-          {feedback.whatToImprove && (
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1 backdrop-blur-md">
-              <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
-                What to improve
-              </p>
-              <p className="text-xs text-ink leading-relaxed">
-                {feedback.whatToImprove}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* High-Scoring Model Answer */}
-        {isIelts && feedback.rewrittenExample ? (
-          <div className="space-y-2 pt-2 border-t border-line">
-            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-tealbird-deep flex items-center gap-1">
-              A band 8+ version of your answer
-            </h4>
-            <div className="p-4 rounded-2xl bg-tealbird/10 border border-tealbird/30 text-xs text-ink leading-relaxed italic">
-              &ldquo;{feedback.rewrittenExample}&rdquo;
-            </div>
-          </div>
-        ) : !isIelts && feedback.suggestions && feedback.suggestions.length > 0 && (
-          <div className="space-y-2 pt-2 border-t border-line">
-            <h4 className="text-[11px] font-semibold uppercase tracking-widest text-stone-muted">
-              Try this next time
-            </h4>
-            <ul className="space-y-2">
-              {feedback.suggestions.map((suggestion, idx) => (
-                <li key={idx} className="flex gap-2 text-xs text-ink/80">
-                  <span className="text-moss font-bold shrink-0">→</span>
-                  <span>{suggestion}</span>
+                <li key={part} className="text-sm leading-relaxed">
+                  <span className="font-semibold capitalize text-ink">{part}: </span>
+                  {feedback.starAnalysis?.[part] ? (
+                    <span className="text-ink/80">{feedback.starAnalysis[part]}</span>
+                  ) : (
+                    <span className="italic text-beak-deep">missing</span>
+                  )}
                 </li>
               ))}
             </ul>
-          </div>
+          </Section>
+        )}
+
+        {isIelts && feedback.rewrittenExample ? (
+          <Section title="A band 8+ version">
+            <p className="text-sm italic text-ink leading-relaxed">&ldquo;{feedback.rewrittenExample}&rdquo;</p>
+          </Section>
+        ) : (
+          !isIelts &&
+          feedback.suggestions &&
+          feedback.suggestions.length > 0 && (
+            <Section title="Try this next time">
+              <ul className="space-y-1">
+                {feedback.suggestions.map((s, idx) => (
+                  <li key={idx} className="flex gap-2 text-sm text-ink/80">
+                    <span className="shrink-0 font-bold text-moss">→</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )
+        )}
+
+        {bodyLanguage && (
+          <Section title="Body language">
+            <BodyLanguageAnswerPanel data={bodyLanguage} />
+          </Section>
+        )}
+        {legacyBody && (
+          <Section title="Body language">
+            <p className="text-sm text-ink/80">
+              {[
+                typeof feedback.eyeContactPercent === "number" ? `Eye contact ${feedback.eyeContactPercent}%` : null,
+                feedback.movementScore ? `${feedback.movementScore} head movement` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </Section>
         )}
       </div>
-    </div>
+    </details>
   );
 }
 
-function phenomenonToBand(val: any): number | null {
-  if (typeof val === "number") return val;
-  return null;
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <h4 className="text-[11px] font-mono uppercase tracking-[0.12em] text-stone-muted">{title}</h4>
+      {children}
+    </div>
+  );
 }
 
 function highlightFillers(
