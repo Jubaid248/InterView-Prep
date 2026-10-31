@@ -909,6 +909,11 @@ export default function InterviewPage() {
         </p>
       )}
 
+      {/* Tota's greeting before the first mock interview question */}
+      {state.track === "mock-interview" && state.currentQuestionIndex === 0 && !state.isFollowUp && currentQuestionDetail?.spokenPrefix && (
+        <p className="mx-auto max-w-xl text-sm text-stone-muted leading-relaxed">{currentQuestionDetail.spokenPrefix}</p>
+      )}
+
       {/* Main Question Text */}
       <div className="space-y-3">
         <h2 className="font-serif font-normal text-2xl sm:text-[2rem] text-ink leading-snug">

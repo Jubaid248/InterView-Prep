@@ -13,7 +13,8 @@ import type { FollowUpStyle } from "@/lib/config/sessionScript";
 
 /**
  * Which follow-up (if any) Tota asks after a main answer. Scripted tracks set
- * followUpStyle per question; mock interviews always probe once.
+ * followUpStyle per question; mock interviews probe once on every question
+ * except the opening introduction, which sets followUpStyle to null.
  */
 function resolveFollowUpStyle(track: string, detail: any): FollowUpStyle | null {
   if (detail && "followUpStyle" in detail) return detail.followUpStyle ?? null;
