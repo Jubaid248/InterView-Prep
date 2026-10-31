@@ -9,7 +9,9 @@ import {
   FOLLOW_UP_RULES,
   INTERVIEW_BLUEPRINT,
   INTERVIEWER_RULES,
+  buildGreeting,
   buildQuestionPlanSystemPrompt,
+  pickIntroAngle,
   type QuestionDetail,
 } from "@/lib/ai/interviewerRules";
 import { FOLLOW_UP_PROMPTS, buildScriptedFollowUpMessage } from "@/lib/ai/trackRules";
@@ -31,7 +33,7 @@ export const promptTemplates: Record<string, TrackPromptTemplate> = {
     systemPrompt: buildQuestionPlanSystemPrompt(),
     systemPromptFollowUp: `${INTERVIEWER_RULES}\n\n${FOLLOW_UP_RULES}`,
     feedbackSystemPrompt:
-      "You are an expert technical interviewer and executive career coach. Evaluate the interview transcript against the candidate's resume and job description. Each question lists the competency it assessed and the signals of a strong answer (Look for). For each answer: 1) evaluate structure using the STAR method (Situation, Task, Action, Result); 2) assign a structureScore (0-100) and relevanceScore (0-100), where relevance reflects how well the answer demonstrated the target competency; 3) provide honest, specific feedback on what worked well and what needs improvement, naming which Look for signals were present and which were missing (avoid generic praise); 4) provide a rewritten example answer anchored directly in the candidate's actual spoken response (not a generic template). Output a valid JSON object with a 'perAnswerFeedback' array and an 'overallSummary' string.",
+      "You are an expert technical interviewer and executive career coach. Evaluate the interview transcript against the candidate's resume and job description. Each question lists the competency it assessed and the signals of a strong answer (Look for). For each answer: 1) evaluate structure using the STAR method (Situation, Task, Action, Result), except for questions marked easy (the opening introduction and background questions): judge those on a clear, confident and concise self-presentation, do not mark them down for missing STAR, and leave their starAnalysis fields empty; 2) assign a structureScore (0-100) and relevanceScore (0-100), where relevance reflects how well the answer demonstrated the target competency; 3) provide honest, specific feedback on what worked well and what needs improvement, naming which Look for signals were present and which were missing (avoid generic praise); 4) provide a rewritten example answer anchored directly in the candidate's actual spoken response (not a generic template). Output a valid JSON object with a 'perAnswerFeedback' array and an 'overallSummary' string.",
   },
   "communication-builder": {
     systemPromptFollowUp: FOLLOW_UP_PROMPTS["method-probe"],
@@ -132,7 +134,8 @@ export async function generateInitialQuestions(
   }
 
   const questionCount = INTERVIEW_BLUEPRINT.length;
-  const userMessageContent = `RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}\n\nPlease generate exactly ${questionCount} interview questions following the blueprint, as a JSON object with a "questions" array.`;
+  // A random opening angle keeps the first question from always being "Tell me about yourself"
+  const userMessageContent = `RESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}\n\nOPENING ANGLE for the Introduction question: ${pickIntroAngle()}\n\nPlease generate exactly ${questionCount} interview questions following the blueprint, as a JSON object with "roleTitle" and a "questions" array.`;
   const models = await getAvailableModels(apiKey);
   const errors: string[] = [];
 
@@ -225,13 +228,21 @@ function parseQuestionsJson(raw: string): ParsedQuestionPlan | null {
     if (Array.isArray(rawQuestions) && rawQuestions.length > 0) {
       const details: QuestionDetail[] = rawQuestions
         .map((q: any, i: number) => ({
-          stage: typeof q === "object" && q?.stage ? String(q.stage) : INTERVIEW_BLUEPRINT[i]?.stage || "",
+          // Fixed stage names keep report labels consistent; the model sometimes renames them
+          stage: INTERVIEW_BLUEPRINT[i]?.stage || (typeof q === "object" && q?.stage ? String(q.stage) : ""),
           question: typeof q === "string" ? q : q?.question || q?.text || String(q),
           competency: typeof q === "object" && q?.competency ? String(q.competency) : "",
           anchor: typeof q === "object" && q?.anchor ? String(q.anchor) : "",
           lookFor: typeof q === "object" && Array.isArray(q?.lookFor) ? q.lookFor.map(String) : [],
+          // Difficulty comes from the blueprint, not the model, so the ramp always holds
+          difficulty: INTERVIEW_BLUEPRINT[i]?.difficulty,
         }))
         .filter((d: QuestionDetail) => Boolean(d.question));
+      if (details[0]) {
+        // Tota greets the candidate, and the opening introduction gets no follow-up
+        details[0].spokenPrefix = buildGreeting(typeof parsed.roleTitle === "string" ? parsed.roleTitle : undefined);
+        details[0].followUpStyle = null;
+      }
       return { questions: details.map((d) => d.question), details };
     }
   } catch (e) {
@@ -270,12 +281,17 @@ function buildFollowUpUserMessage(
 
   const { detail, resumeText, jobDescription } = context;
   const intent = detail
-    ? `\n\nQUESTION INTENT:\nStage: ${detail.stage || "N/A"}\nCompetency: ${detail.competency || "N/A"}\nAnchor: ${detail.anchor || "N/A"}\nLook for: ${(detail.lookFor || []).join("; ") || "N/A"}`
+    ? `\n\nQUESTION INTENT:\nStage: ${detail.stage || "N/A"}\nDifficulty: ${detail.difficulty || "medium"}\nCompetency: ${detail.competency || "N/A"}\nAnchor: ${detail.anchor || "N/A"}\nLook for: ${(detail.lookFor || []).join("; ") || "N/A"}`
     : "";
   const cv = resumeText ? `\n\nCANDIDATE CV (excerpt):\n${resumeText.slice(0, CONTEXT_CHAR_LIMIT)}` : "";
   const jd = jobDescription ? `\n\nJOB DESCRIPTION (excerpt):\n${jobDescription.slice(0, CONTEXT_CHAR_LIMIT)}` : "";
 
-  return `${base}${intent}${cv}${jd}\n\nJudge the answer against the question intent, then generate ONE follow-up question following the follow-up rules.`;
+  // Models lean toward probing, so spell out the light touch the opening questions need
+  const ask =
+    detail?.difficulty === "easy"
+      ? "This is an easy opening question. Generate ONE light, friendly follow-up out of curiosity about something the candidate just mentioned, like a person getting to know them. Do NOT ask for examples, impact, results, metrics or proof."
+      : "Judge the answer against the question intent, then generate ONE follow-up question following the follow-up rules.";
+  return `${base}${intent}${cv}${jd}\n\n${ask}`;
 }
 
 export async function generateFollowUp(
@@ -515,7 +531,10 @@ export async function generateFeedbackReport(track: string, session: any): Promi
         const intent = detail.competency
           ? `\nCompetency: ${detail.competency}${detail.lookFor?.length ? `\nLook for: ${detail.lookFor.join("; ")}` : ""}`
           : "";
-        const label = track === "mock-interview" ? detail.stage || frameworkName : frameworkName;
+        const label =
+          track === "mock-interview"
+            ? `${detail.stage || frameworkName}${detail.difficulty ? `, ${detail.difficulty}` : ""}`
+            : frameworkName;
         const blLine = m.bodyLanguage ? `\n${summarizeForPrompt(m.bodyLanguage as any)}` : "";
         return `Q${i + 1} (${label}): ${m.questionText}${intent}${blLine}\nCandidate Answer: ${m.answerTranscript}\n(Filler Words: ${m.fillerWordCount}, Pace: ${m.speakingPace} WPM)${
           m.followUpText
